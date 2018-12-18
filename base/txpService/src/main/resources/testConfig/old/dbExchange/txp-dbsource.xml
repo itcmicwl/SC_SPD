@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:camel="http://camel.apache.org/schema/spring"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+      	 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd  
+           http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+           http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+    <bean id="config.dbsources" class="gyqx.txp.configuration.DbSources">
+    	<property name="dbSourceMap">
+    		<map>
+    			<entry key="client" value-ref="dataSourceClient" /> 
+    			<entry key="center" value-ref="dataSourceCenter" /> 
+    		</map>
+    	</property>
+    	
+    	<property name="dbTypeMap">
+    		<map>
+    			<entry key="client" value="mysql" /> 
+    			<entry key="center" value="mysql" /> 
+    		</map>
+    	</property>
+    	
+    	<property name="transacationManagerMap">
+    		<map>
+    			<entry key="client" value-ref="txClient" /> 
+    			<entry key="center" value-ref="txCenter" /> 
+    		</map>
+    	</property>
+    </bean>    
+    
+</beans>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 引入接口，只要实现接口的方法就会调用对应接口方法的 select id -->
+<mapper namespace="gyqx.spdhdi.myGoods.dao.mapper.IProvGoodsHosBatchMgrMapper"> 
+<!-- parameterType传入参数类型     resultMap=自己定义的一个返回类型     resultType返回类型 -->
+	<select id="getHosProvInfoVoList"  resultMap="hosProvInfoVoResult"  parameterType="gyqx.spdhdi.myGoods.vo.HosProvInfoVo">
+		SELECT  p.*,c.prov_name FROM prov_hos_info p LEFT JOIN
+		(SELECT b.id,b.cname prov_name,b.kind from bas_company_info b where b.kind = 2) c 
+		on p.prov_id = c.id
+		<where> 1=1 and p.status= 2 and p.hos_id = #{hosId}
+			<if test='provName != null and provName !=""'>
+				<bind name="provName" value="'%' + provName + '%'" />
+				and c.prov_name like #{provName}
+			</if>
+			<if test='provLxr != null and provLxr !=""'>
+				<bind name="provLxr" value="'%' + provLxr + '%'" />
+				and p.prov_lxr like #{provLxr}
+			</if>
+			<!-- 集配商或者合作商标志 -->
+			<if test='collectorOrPartner != null and collectorOrPartner !=""'>
+				<if test='collectorOrPartner =="collector"'>
+					AND not EXISTS(
+						SELECT * from hos_collector h WHERE h.hos_id = p.hos_id AND h.prov_id = p.prov_id
+					)
+				</if>
+				<if test='collectorOrPartner =="partner"'>
+					AND not EXISTS(
+						SELECT * from hos_collector_prov h WHERE h.hos_id = p.hos_id AND h.prov_id = p.prov_id
+					)
+					<!-- AND not EXISTS(
+						SELECT * from hos_collector_prov h WHERE h.hos_id = p.hos_id AND 
+						(h.prov_id = p.prov_id or h.collector_id = p.prov_id)
+					) -->
+				</if>
+			</if>
+		</where>
+	</select>
+	
+	<resultMap type="gyqx.spdhdi.myGoods.vo.HosProvInfoVo" id="hosProvInfoVoResult">
+		<id property="id" column="id"/>
+		<result property="provId"  column="prov_id"/>
+		<result property="provName"  column="prov_name"/><!-- 供应商名称 -->
+		<result property="hosId"  column="hos_id"/>
+		<result property="hosName"  column="hos_name"/><!-- 医院名称 -->
+		<result property="hosLxr"  column="hos_lxr"/><!-- 医院联系人 -->
+		<result property="hosLxrTelphonenum"  column="hos_lxr_telphonenum"/><!-- 医院联系方式 -->
+		<result property="provLxr"  column="prov_lxr"/><!-- 配送商联系人 -->
+		<result property="provLxrTelphonenum"  column="prov_lxr_telphonenum"/><!-- 配送商联系方式 -->
+		<result property="status"  column="status"/>
+		<result property="remark"  column="remark"/>
+	    <result property="agentName"  column="agent_name"/>
+		<result property="regCode"  column="reg_code"/>
+		<result property="jyxkCode"  column="jyxk_code"/>  
+		<result property="nsrsbCode"  column="nsrsb_code"/> 
+		<result property="productCode"  column="product_code"/>
+	    <result property="uid"  column="uxid"/>
+	    <result property="fillDate"  column="fill_date"/>
+	    <result property="lastUpdateDatetime"  column="last_update_datetime"/>
+	    <result property="version"  column="version"/>
+	</resultMap>
+	
+</mapper>

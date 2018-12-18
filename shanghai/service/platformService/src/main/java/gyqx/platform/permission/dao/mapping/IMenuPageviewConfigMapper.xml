@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="gyqx.platform.permission.dao.mapper.IMenuPageviewConfigMapper"> 
+
+	<select id="get"  resultMap="menuPageviewPermission" >
+		<![CDATA[
+		select v.*,e.id as e_id,e.page_id as e_page_id,e.ename as e_ename,e.code as e_code,e.remark as e_remark,e.func_ids as e_func_ids,e.uxid  as e_uid,e.mt as e_mt,e.version as e_version
+		 from sys_pageview v LEFT JOIN  sys_pageview_element e on v.id = e.page_id
+		]]>
+		<where>	
+		 v.menu_id=#{id}
+		</where>
+	</select>
+ 	<resultMap type="gyqx.platform.permission.vo.MenuPageviewPermission" id="menuPageviewPermission">
+ 		<id property="id" column="id"/>
+ 		<association property="pageview" javaType="gyqx.platform.po.SysPageview">
+	 		<id property="id" column="id"/>
+			<result property="menuId"  column="menu_id"/>
+			<result property="ename"  column="ename"/>
+			<result property="funcIds"  column="func_ids"/>
+			<result property="uid"  column="uxid"/>
+			<result property="mt"  column="mt"/>
+			<result property="version"  column="version"/>
+ 		</association>
+ 		<collection property="elements" ofType="gyqx.platform.po.SysPageviewElement">
+	 		<id property="id" column="e_id"/>
+			<result property="pageId"  column="e_page_id"/>
+			<result property="ename"  column="e_ename"/>
+			<result property="code"  column="e_code"/>
+			<result property="remark"  column="e_remark"/>
+			<result property="funcIds"  column="e_func_ids"/>
+			<result property="uid"  column="e_uid"/>
+			<result property="mt"  column="e_mt"/>
+			<result property="version"  column="e_version"/>
+ 		</collection>
+	</resultMap>
+	<select id="getSuperAdminMenus" resultMap="projectMenuMap">
+		select m.* from sys_project_menu m
+		where  m.project_code = #{projectCode}
+	</select>
+	<select id="getUserMenus" resultMap="projectMenuMap">
+		select distinct m.* from  sys_project_menu m
+		where  m.project_code = #{projectCode} and (m.require_auth='1' and m.id in (
+		select menu_id from sys_role_menu r where EXISTS  (select * from sys_user_role ur where r.role_id = ur.role_id and ur.user_id=#{userId} ))
+		or (m.require_auth='0' or m.menu_level <![CDATA[<]]> 2))
+	</select>
+	<resultMap type="gyqx.platform.sys.vo.ProjectMenuVo" id="projectMenuMap">
+		<id property="id" column="id"/>
+		<result property="pcode"  column="pcode"/>
+		<result property="projectCode"  column="project_code"/>
+		<result property="code"  column="code"/>
+		<result property="ordinal"  column="ordinal"/>
+		<result property="path"  column="path"/>
+		<result property="directory"  column="directory"/>
+		<result property="cname"  column="cname"/>
+		<result property="hidden"  column="hidden"/>
+		<result property="requireAuth"  column="require_auth"/>
+		<result property="redirect"  column="redirect"/>
+		<result property="iconCls"  column="icon_cls"/>
+		<result property="meta"  column="meta"/>
+		<result property="menuLevel"  column="menu_level"/>
+		<result property="mt"  column="mt"/>
+		<result property="version"  column="version"/>
+		<result property="pageEls"  column="pageEls"/>
+	</resultMap>
+</mapper>

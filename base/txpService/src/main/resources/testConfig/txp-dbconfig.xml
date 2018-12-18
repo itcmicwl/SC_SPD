@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:camel="http://camel.apache.org/schema/spring"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+      	 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd  
+           http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+           http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+	
+	<bean id="center" class="oracle.jdbc.pool.OracleConnectionPoolDataSource" destroy-method="close">
+	    <property name="URL" value="${oracle.center.url}" />
+	    <property name="user" value="${oracle.center.username}" />
+	    <property name="password" value="${oracle.center.password}" />
+	    <property name="connectionCacheProperties">
+	        <props merge="default">
+	            <prop key="MinLimit">5</prop>
+	            <prop key="MaxLimit">50</prop>
+	        </props>
+	    </property>
+	</bean>
+	
+	<bean id="test" class="oracle.jdbc.pool.OracleConnectionPoolDataSource" destroy-method="close">
+	    <property name="URL" value="${oracle.test.url}" />
+	    <property name="user" value="${oracle.test.username}" />
+	    <property name="password" value="${oracle.test.password}" />
+	    <property name="connectionCacheProperties">
+	        <props merge="default">
+	            <prop key="MinLimit">5</prop>
+	            <prop key="MaxLimit">50</prop>
+	        </props>
+	    </property>
+	</bean>
+	
+
+    
+    <bean id="txCenter" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">    
+        <property name="dataSource" ref="center"/>  
+    </bean>  
+    <bean id="txTest" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">    
+        <property name="dataSource" ref="test"/>  
+    </bean>  
+
+    
+    <bean id="config.dbsources" class="gyqx.txp.configuration.DbSources">
+    	<property name="dbSourceMap">
+    		<map>
+    			<entry key="center" value-ref="center" /> 
+    			<entry key="test" value-ref="test" /> 
+    		</map>
+    	</property>
+    	
+    	<property name="dbTypeMap">
+    		<map>
+    			<entry key="center" value="oracle" /> 
+    			<entry key="test" value="oracle" /> 
+    		</map>
+    	</property>
+    	
+    	<property name="transacationManagerMap">
+    		<map>
+    			<entry key="center" value-ref="txCenter" /> 
+    			<entry key="test" value-ref="txTest" /> 
+    		</map>
+    	</property>
+    </bean>
+</beans>

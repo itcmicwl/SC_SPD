@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 引入接口，只要实现接口的方法就会调用对应接口方法的 select id -->
+<mapper namespace="gyqx.spdhdi.baseData.dao.mapper.BasMfrsInfoMapper"> 
+<!-- parameterType传入参数类型     resultMap=自己定义的一个返回类型     resultType返回类型 -->
+	<select id="getBasMfrsInfoList"  resultMap="basMfrsInfoPoResult"  parameterType="gyqx.spdhdi.po.BasMfrsInfo">
+		SELECT ouser.ename,ouser.cname,mfrs.* FROM bas_mfrs_info mfrs  LEFT JOIN sys_user_org ouser ON mfrs.uxid = ouser.user_id
+		<where>
+			<if test='mfrsKind != null and mfrsKind !=""'>  
+				and mfrs.mfrs_kind = #{mfrsKind}  
+			</if>
+			<if test='mfrsName != null and mfrsName !=""'>
+				<bind name="mfrsName" value="'%' + mfrsName + '%'" />
+				and mfrs.mfrs_name like #{mfrsName}  
+			</if>
+		</where>
+		ORDER BY mfrs.last_update_datetime desc
+	</select>	
+	<resultMap type="gyqx.spdhdi.baseData.vo.BasMfrsInfoVo" id="basMfrsInfoPoResult">
+		<id property="id" column="id"/>
+		<result property="ename"  column="ename"/>
+		<result property="cname"  column="cname"/>
+		<result property="mfrsKind"  column="mfrs_kind"/>
+		<result property="mfrsName"  column="mfrs_name"/>
+	    <result property="agentName"  column="agent_name"/>
+		<result property="regCode"  column="reg_code"/>
+		<result property="jyxkCode"  column="jyxk_code"/>  
+		<result property="nsrsbCode"  column="nsrsb_code"/> 
+		<result property="productCode"  column="product_code"/>
+		<result property="recordCard"  column="record_card"/>
+		<result property="remark"  column="remark"/>
+	    <result property="isThreeInOne"  column="is_three_in_one"/>
+	    <result property="flag"  column="flag"/>
+	    <result property="uid"  column="uxid"/>
+	    <result property="fillDate"  column="fill_date"/>
+	    <result property="lastUpdateDatetime"  column="last_update_datetime"/>
+	    <result property="version"  column="version"/>
+	</resultMap>
+	<select id="getBasMfrsInfoByid"  resultMap="basMfrsInfoPoResult">
+		select * from bas_mfrs_info t 
+			<where>
+			t.id = #{id}
+		</where>
+	</select>
+	<select id="existBasMfrsInfo"  resultType="java.lang.Integer">
+		select count(*) from bas_mfrs_info t 
+			<where> 1=1
+			<if test='id != null and id !=""'>  
+				and t.id  <![CDATA[=]]> #{id}
+			</if>
+		</where>
+	</select>
+	<insert id="insertBasMfrsInfo" parameterType="gyqx.spdhdi.po.BasMfrsInfo" databaseId="oracle">
+		INSERT INTO bas_mfrs_info
+		  (id,
+		   mfrs_kind,
+		   mfrs_name,
+		   agent_name,
+		   reg_code,
+		   jyxk_code,
+		   nsrsb_code,
+		   product_code,
+		   record_card,
+		   remark,
+		   is_three_in_one,
+		   master_code,
+		   flag,
+		   uxid,
+		   fill_date,
+		   last_update_datetime,
+		   version)
+		VALUES
+		  (#{id},
+		   #{mfrsKind},
+		   #{mfrsName},
+		   #{agentName},
+		   #{regCode},
+		   #{jyxkCode},
+		   #{nsrsbCode},
+		   #{productCode},
+		   #{recordCard},
+		   #{remark},
+		   #{isThreeInOne},
+		   #{masterCode},
+		   '1',
+		   #{uid},
+		   sysdate,
+		   sysdate,
+		   0)
+	</insert>
+
+	<insert id="insertBasMfrsInfo" parameterType="gyqx.spdhdi.po.BasMfrsInfo" databaseId="mysql">
+		INSERT INTO bas_mfrs_info
+		  (id,
+		   mfrs_kind,
+		   mfrs_name,
+		   agent_name,
+		   reg_code,
+		   jyxk_code,
+		   nsrsb_code,
+		   product_code,
+		   record_card,
+		   remark,
+		   is_three_in_one,
+		   master_code,
+		   flag,
+		   uxid,
+		   fill_date,
+		   last_update_datetime,
+		   version)
+		VALUES
+		  (#{id},
+		   #{mfrsKind},
+		   #{mfrsName},
+		   #{agentName},
+		   #{regCode},
+		   #{jyxkCode},
+		   #{nsrsbCode},
+		   #{productCode},
+		   #{recordCard},
+		   #{remark},
+		   #{isThreeInOne},
+		   #{masterCode},
+		   '1',
+		   #{uid},
+		   sysdate(),
+		   sysdate(),
+		   0)
+	</insert>	
+	<update id="setStatus" parameterType="gyqx.spdhdi.po.BasMfrsInfo">
+		update bas_mfrs_info t set
+		t.flag = #{flag},
+		<if test="_databaseId=='mysql'">
+			t.last_update_datetime = sysdate(),
+		</if>
+		<if test="_databaseId=='oracle'">
+			t.last_update_datetime = sysdate,
+		</if>
+		version = version+1	
+		where id=#{id} and version=#{version}
+	</update>
+	<update id="setBasMfrsInfo" parameterType="gyqx.spdhdi.po.BasMfrsInfo" databaseId="oracle">
+		update bas_mfrs_info set
+		<if test='mfrsName != null and mfrsName !=""'>mfrs_name = #{mfrsName},</if>
+		<if test='mfrsKind != null and mfrsKind !=""'>mfrs_kind = #{mfrsKind},</if>
+		<if test='agentName != null and agentName !=""'>agent_name = #{agentName},</if>
+		<if test='regCode != null and regCode !=""'>reg_code = #{regCode},</if>
+		<if test='jyxkCode != null and jyxkCode !=""'>jyxk_code = #{jyxkCode},</if>
+		<if test='nsrsbCode != null and nsrsbCode !=""'>nsrsb_code = #{nsrsbCode},</if>
+		<if test='productCode != null and productCode !=""'>product_code = #{productCode},</if>
+		<if test='recordCard != null and recordCard !=""'>record_card = #{recordCard},</if>
+		<if test='isThreeInOne != null and isThreeInOne !=""'>is_three_in_one = #{isThreeInOne},</if>
+		<if test='uid != null and uid !=""'>uxid = #{uid},</if>
+		<if test='remark != null and remark !=""'>remark = #{remark},</if>
+		<if test='flag != null and flag !=""'>flag = #{flag},</if>
+		version = version+1,
+		last_update_datetime = sysdate
+		where id=#{id} and version=#{version}
+	</update>
+	<update id="setBasMfrsInfo" parameterType="gyqx.spdhdi.po.BasMfrsInfo" databaseId="mysql">
+		update bas_mfrs_info set
+		<if test='mfrsName != null and mfrsName !=""'>mfrs_name = #{mfrsName},</if>
+		<if test='mfrsKind != null and mfrsKind !=""'>mfrs_kind = #{mfrsKind},</if>
+		<if test='agentName != null and agentName !=""'>agent_name = #{agentName},</if>
+		<if test='regCode != null and regCode !=""'>reg_code = #{regCode},</if>
+		<if test='jyxkCode != null and jyxkCode !=""'>jyxk_code = #{jyxkCode},</if>
+		<if test='nsrsbCode != null and nsrsbCode !=""'>nsrsb_code = #{nsrsbCode},</if>
+		<if test='productCode != null and productCode !=""'>product_code = #{productCode},</if>
+		<if test='recordCard != null and recordCard !=""'>record_card = #{recordCard},</if>
+		<if test='isThreeInOne != null and isThreeInOne !=""'>is_three_in_one = #{isThreeInOne},</if>
+		<if test='uid != null and uid !=""'>uxid = #{uid},</if>
+		<if test='remark != null and remark !=""'>remark = #{remark},</if>
+		<if test='flag != null and flag !=""'>flag = #{flag},</if>
+		version = version+1,
+		last_update_datetime = sysdate()
+		where id=#{id} and version=#{version}
+	</update>
+	<delete id="deleteByPrimaryKey" parameterType="gyqx.spdhdi.po.BasMfrsInfo">
+		DELETE FROM bas_company_info
+		WHERE id=#{id}
+	</delete>
+</mapper>

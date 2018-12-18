@@ -1,0 +1,1 @@
+select * from bas_mfrs_info  where mfrs_kind = :mfrsKind

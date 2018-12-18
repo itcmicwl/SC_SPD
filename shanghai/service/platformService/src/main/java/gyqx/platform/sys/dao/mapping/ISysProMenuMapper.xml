@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 引入接口，只要实现接口的方法就会调用对应接口方法的 select id -->
+<mapper namespace="gyqx.platform.sys.dao.mapper.ISysProMenuMapper">
+	<select id="getSysProMenuList" resultType="gyqx.platform.sys.vo.SysProjectMenuVo"
+		parameterType="gyqx.platform.sys.vo.SysProjectMenuVo">
+		select spm.id,spm.pcode,spm.project_code
+		projectCode,spm.code,spm.ordinal,spm.path,spm.directory,spm.cname,spm.hidden,spm.require_auth requireAuth
+		,spm.redirect,spm.icon_cls iconCls,spm.meta,sp.cname projectName,pspm.cname pName,spm.menu_level menuLevel
+		from sys_project_menu spm
+		LEFT JOIN sys_project_menu pspm on spm.pcode=pspm.code
+		LEFT JOIN sys_project sp on spm.project_code=sp.code		
+		<where>
+			<if test='projectCode != null and projectCode !=""'>
+				and spm.project_code =#{projectCode}
+			</if>
+			<if test='menuLevel != null and menuLevel != -1'>
+				and spm.menu_level =#{menuLevel}
+			</if>
+			<if test='path != null and path !=""'>
+			 <bind name="path" value="'%' + path + '%'" />
+				and spm.path LIKE  #{path} 
+			</if>
+			<if test='pcode != null and pcode !=""'>
+				<bind name="fPcode" value=" pcode + '%'" />
+				and spm.code LIKE  #{fPcode}
+			</if>
+			<if test='cname != null and cname !=""'>
+			 <bind name="cname" value="'%' + cname + '%'" />
+				and spm.cname LIKE  #{cname}  
+			</if>
+		</where>
+		order by ordinal
+	</select>
+	<select id="getById" resultType="gyqx.platform.sys.vo.SysProjectMenuVo"
+			parameterType="java.lang.String">
+		select spm.id,spm.pcode,spm.project_code
+		projectCode,spm.code,spm.ordinal,spm.path,spm.directory,spm.cname,spm.hidden,spm.require_auth requireAuth
+		,spm.redirect,spm.icon_cls iconCls,spm.meta,sp.cname projectName,pspm.cname pName,spm.menu_level menuLevel
+		from sys_project_menu spm
+		LEFT JOIN sys_project_menu pspm on spm.pcode=pspm.code
+		LEFT JOIN sys_project sp on spm.project_code=sp.code
+		<where>
+			<if test='id != null and id !=""'>
+				and spm.id =#{id}
+			</if>
+		</where>
+	</select>
+	<select id="getParentSysProMenuList" resultType="gyqx.platform.sys.vo.SysProjectMenuVo"
+		parameterType="gyqx.platform.sys.vo.SysProjectMenuVo">
+		select spm.id,spm.pcode,spm.project_code
+		projectCode,spm.code,spm.ordinal,spm.path,spm.directory,spm.cname,spm.hidden,
+		spm.redirect,spm.icon_cls iconCls,spm.meta,sp.cname projectName,pspm.cname pName,spm.menu_level menuLevel
+		from sys_project_menu spm
+		LEFT JOIN sys_project_menu pspm on spm.pcode=pspm.code
+		LEFT JOIN sys_project sp on spm.project_code=sp.code		
+		<where>
+			(spm.pcode is null or spm.pcode='')	
+			<if test='projectCode != null and projectCode !=""'>
+				and spm.project_code = #{projectCode}
+			</if>
+		</where>
+		order by ordinal
+	</select>
+	<select id="sysMenuKindList" resultType="gyqx.platform.sys.vo.SysProjectMenuVo"
+			parameterType="java.lang.String">
+		select spm.id,spm.pcode,spm.project_code
+		projectCode,spm.code,spm.ordinal,spm.path,spm.directory,spm.cname,spm.hidden,
+		spm.redirect,spm.icon_cls iconCls,spm.meta,spm.menu_level menuLevel
+		from sys_project_menu spm
+		<where>
+			(menu_level =0 or menu_level =1)
+			and spm.project_code = #{projectCode}
+		</where>
+		order by ordinal
+	</select>
+	<insert id="insertProMenu" parameterType="gyqx.platform.sys.vo.SysProjectMenuVo" databaseId="oracle">
+		INSERT INTO
+		sys_project_menu(id,pcode,project_code,code,ordinal,path,directory,cname,hidden,require_auth,redirect,icon_cls,menu_level,meta,mt,version)
+		VALUES (#{id}, #{pcode}, #{projectCode}, #{code},
+		#{ordinal}, #{path}, #{directory}, #{cname}, #{hidden}, #{requireAuth},
+		#{redirect}, #{iconCls},#{menuLevel},#{meta}, sysdate,1)
+	</insert>
+	<insert id="insertProMenu" parameterType="gyqx.platform.sys.vo.SysProjectMenuVo" databaseId="mysql">
+		INSERT INTO
+		sys_project_menu(id,pcode,project_code,code,ordinal,path,directory,cname,hidden,require_auth,redirect,icon_cls,menu_level,meta,mt,version)
+		VALUES (#{id}, #{pcode}, #{projectCode}, #{code},
+		#{ordinal}, #{path}, #{directory}, #{cname}, #{hidden}, #{requireAuth},
+		#{redirect}, #{iconCls},#{menuLevel},#{meta}, sysdate(),1)
+	</insert>
+	<select id="existProMenuCode" resultType="java.lang.Integer" parameterType="gyqx.platform.sys.vo.SysProjectMenuVo">
+		select count(*) from sys_project_menu t
+		<where>
+			<if test='code != null and code !=""'>
+				and t.code =#{code}
+			</if>
+			<if test='id != null and id !=""'>
+				and t.id  <![CDATA[<>]]> #{id}
+			</if>
+		</where>
+	</select>
+	<update id="updateProMenu" parameterType="gyqx.platform.sys.vo.SysProjectMenuVo">
+		update sys_project_menu set
+		<if test='pcode != null'>
+			 pcode = #{pcode},
+		</if>
+		<if test='projectCode != null'>
+			 project_code = #{projectCode},
+		</if>
+		<if test='code != null'>
+			 code = #{code},
+		</if>
+		<if test='ordinal != null'>
+			 ordinal = #{ordinal},
+		</if>
+		<if test='path != null'>
+			 path = #{path},
+		</if>
+		<if test='directory != null and directory !=""'>
+			 directory = #{directory},
+		</if>
+		<if test='cname != null and cname !=""'>
+			cname = #{cname},
+		</if>
+		<if test='requireAuth != null'>
+			 require_auth = #{requireAuth},
+		</if>
+		<if test='hidden != null'>
+			 hidden = #{hidden},
+		</if>		
+		<if test='redirect != null '>
+			 redirect = #{redirect},
+		</if>
+		<if test='iconCls != null'>
+			 icon_cls = #{iconCls},
+		</if>
+		<if test='meta != null'>
+			 meta = #{meta},
+		</if>
+		<if test='menuLevel != null'>
+			menu_level = #{menuLevel},
+		</if>
+		version = version+1,
+		mt = #{mt}
+		where id=#{id}
+	</update>
+	<delete id="deleteProMenu" parameterType="gyqx.platform.sys.vo.SysProjectMenuVo">
+		DELETE FROM sys_project_menu WHERE id=#{id}
+	</delete>
+</mapper>

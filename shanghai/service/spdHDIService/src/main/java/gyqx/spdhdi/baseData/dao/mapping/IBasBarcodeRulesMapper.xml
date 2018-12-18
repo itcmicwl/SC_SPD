@@ -1,0 +1,210 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="gyqx.spdhdi.baseData.dao.mapper.IBasBarcodeRulesMapper"> 
+<!-- parameterType传入参数类型     resultMap=自己定义的一个返回类型     resultType返回类型 -->
+	<select id="list"  resultMap="basBarcodeRulesMap" parameterType="gyqx.spdhdi.po.BasBarcodeRules">
+		<![CDATA[
+			SELECT 
+			    id,
+			    barcode,
+			    barcode_len,
+			    barleader,
+			    consumables_position,
+			    consumables_len,
+			    is_main,
+			    period_position,
+			    period_format,
+			    production_position,
+			    production_len,
+			    sign1_position,
+			    sign1,
+			    sign2_position,
+			    sign2,
+			    tracknum_position,
+			    tracknum_len,
+			    flag,
+			    uxid,
+			    fill_date,
+			    last_update_datetime,
+			    version
+			FROM
+			    bas_barcode_rules
+		]]>
+		<where>
+			<if test='flag != null and flag !=""'>
+				and flag = #{flag}
+			</if>
+			<if test='barcode != null and barcode !=""'>
+				<bind name="barcode" value="'%' + barcode + '%'" />
+				and barcode like #{barcode}
+			</if>
+			<if test="barcodeLen != 0">
+				and barcode_len = #{barcodeLen}
+			</if>
+		</where>
+	</select>
+ 	<resultMap type="gyqx.spdhdi.po.BasBarcodeRules" id="basBarcodeRulesMap">
+		<id property="id" column="id"/>
+		<result property="barcode"  column="barcode"/>
+		<result property="barcodeLen"  column="barcode_len"/>
+		<result property="barleader"  column="barleader"/>
+		<result property="consumablesPosition"  column="consumables_position"/>
+		<result property="consumablesLen"  column="consumables_len"/>
+		<result property="isMain"  column="is_main"/>
+		<result property="periodPosition"  column="period_position"/>
+		<result property="periodFormat"  column="period_format"/>
+		<result property="productionPosition"  column="production_position"/>
+		<result property="productionLen"  column="production_len"/>
+		<result property="sign1Position"  column="sign1_position"/>
+		<result property="sign1"  column="sign1"/>
+		<result property="sign2Position"  column="sign2_position"/>
+		<result property="sign2"  column="sign2"/>
+		<result property="tracknumPosition"  column="tracknum_position"/>
+		<result property="tracknumLen"  column="tracknum_len"/>
+		<result property="flag"  column="flag"/>
+		<result property="uid"  column="uxid"/>
+		<result property="fillDate"  column="fill_date"/>
+		<result property="lastUpdateDatetime"  column="last_update_datetime"/>
+		<result property="version"  column="version"/>
+	</resultMap> 
+	
+	<update id="update" parameterType="gyqx.spdhdi.po.BasBarcodeRules" databaseId="mysql">
+		update bas_barcode_rules
+		<set>
+			<if test='barcode != null'>  
+				barcode = #{barcode},
+			</if> 
+			<if test='barcodeLen != null'>  
+				barcode_len = #{barcodeLen},
+			</if> 
+			<if test='barleader != null'>  
+				barleader = #{barleader},
+			</if> 
+			<if test='consumablesPosition != null'>  
+				consumables_position = #{consumablesPosition},
+			</if> 
+			<if test='consumablesLen != null'>  
+				consumables_len = #{consumablesLen},
+			</if> 
+			<if test='isMain != null'>  
+				is_main = #{isMain},
+			</if> 
+			<if test='periodPosition != null'>  
+				period_position = #{periodPosition},
+			</if> 
+			<if test='periodFormat != null'>  
+				period_format = #{periodFormat},
+			</if> 
+			<if test='productionPosition != null'>  
+				production_position = #{productionPosition},
+			</if> 
+			<if test='productionLen != null'>  
+				production_len = #{productionLen},
+			</if> 
+			<if test='sign1Position != null'>  
+				sign1_position = #{sign1Position},
+			</if> 
+			<if test='sign1 != null'>  
+				sign1 = #{sign1},
+			</if> 
+			<if test='sign2Position != null'>  
+				sign2_position = #{sign2Position},
+			</if> 
+			<if test='sign2 != null'>  
+				sign2 = #{sign2},
+			</if> 
+			<if test='tracknumPosition != null'>  
+				tracknum_position = #{tracknumPosition},
+			</if> 
+			<if test='tracknumLen != null'>  
+				tracknum_len = #{tracknumLen},
+			</if> 
+			<if test='flag != null'>  
+				flag = #{flag},
+			</if> 
+			<if test='uid != null'>  
+				uxid = #{uid},
+			</if> 
+			<if test='fillDate != null'>  
+				fill_date = #{fillDate},
+			</if>
+			last_update_datetime = sysdate(),
+			version=version+1,
+		</set>
+		<where>
+			and id = #{id}
+			and version= #{version}
+		</where>
+	</update>
+	
+	<update id="update" parameterType="gyqx.spdhdi.po.BasBarcodeRules" databaseId="oracle">
+		update bas_barcode_rules
+		<set>
+			<if test='barcode != null'>  
+				barcode = #{barcode},
+			</if> 
+			<if test='barcodeLen != null'>  
+				barcode_len = #{barcodeLen},
+			</if> 
+			<if test='barleader != null'>  
+				barleader = #{barleader},
+			</if> 
+			<if test='consumablesPosition != null'>  
+				consumables_position = #{consumablesPosition},
+			</if> 
+			<if test='consumablesLen != null'>  
+				consumables_len = #{consumablesLen},
+			</if> 
+			<if test='isMain != null'>  
+				is_main = #{isMain},
+			</if> 
+			<if test='periodPosition != null'>  
+				period_position = #{periodPosition},
+			</if> 
+			<if test='periodFormat != null'>  
+				period_format = #{periodFormat},
+			</if> 
+			<if test='productionPosition != null'>  
+				production_position = #{productionPosition},
+			</if> 
+			<if test='productionLen != null'>  
+				production_len = #{productionLen},
+			</if> 
+			<if test='sign1Position != null'>  
+				sign1_position = #{sign1Position},
+			</if> 
+			<if test='sign1 != null'>  
+				sign1 = #{sign1},
+			</if> 
+			<if test='sign2Position != null'>  
+				sign2_position = #{sign2Position},
+			</if> 
+			<if test='sign2 != null'>  
+				sign2 = #{sign2},
+			</if> 
+			<if test='tracknumPosition != null'>  
+				tracknum_position = #{tracknumPosition},
+			</if> 
+			<if test='tracknumLen != null'>  
+				tracknum_len = #{tracknumLen},
+			</if> 
+			<if test='flag != null'>  
+				flag = #{flag},
+			</if> 
+			<if test='uid != null'>  
+				uxid = #{uid},
+			</if> 
+			<if test='fillDate != null'>  
+				fill_date = #{fillDate},
+			</if>
+			last_update_datetime = sysdate,
+			version=version+1,
+		</set>
+		<where>
+			and id = #{id}
+			and version= #{version}
+		</where>
+	</update>	
+</mapper>

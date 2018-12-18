@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:c="http://camel.apache.org/schema/spring"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+      	 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd  
+           http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+           http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+
+	<context:property-placeholder location="classpath*:gyqx/txp/*.properties" />
+	
+	<import resource="txp-dbconfig.xml"/>
+	<import resource="txp-jms.xml"/>
+	<import resource="txp-taskconfig.xml"/>
+	<import resource="txp-beans.xml"/>	
+	
+    
+    <c:camelContext >
+		<c:route id="loadSyncDataToFile" >
+    		<c:from uri="timer://foo?fixedRate=true&amp;period=500&amp;repeatCount=1" />
+<!--     		<c:from uri="direct:startSync" /> -->
+    		<c:transform>
+	    		<c:groovy>	    		
+	    		ClientSyncWorker.getCurrent().loadSyncData();
+	    		</c:groovy>
+    		</c:transform>
+    		<c:split>
+    			<c:simple>${body}</c:simple>
+    			<c:transform>
+    				<c:groovy>
+    					headers.CamelFileName = "hessian.dat";
+    					body
+    				</c:groovy>
+    			</c:transform>
+    			<c:marshal ref="hessian" />
+				<c:marshal >
+					<c:zipFile />
+				</c:marshal>
+				<c:transform>
+		    		<c:groovy>
+		    		def now = new Date();
+		    		headers.hospitalId = TxpClientConfig.cfg.hospitalId;
+		    		headers.CamelFileName ='sync_' + now.format("yyyy-MM-dd_HH_mm_ss-SSS")+ ".zip";
+		    		body
+		    		</c:groovy>
+	    		</c:transform>
+	    		<c:log message="loadSyncDataToFile ${header.CamelFileName}  start .............................................." />
+	    		<c:to uri="file://target/txpfiles/to-center/in" />
+	    		<c:log message="loadSyncDataToFile ${header.CamelFileName}  end" />
+    		</c:split>
+    	</c:route> 
+    	
+    	<c:route id="loadSyncFileToCenter">
+    		<c:from uri="file://target/txpfiles/to-center/in?sortBy=file:onlyname.noext;file:modified" />
+    		<c:transform>
+	    		<c:groovy>
+	    		headers.CamelJmsDestinationName = TxpClientConfig.cfg.centerDestinationName;
+	    		body
+	    		</c:groovy>
+    		</c:transform>
+    		<c:to uri="activemq:queue:dummy?requestTimeout=100000" />
+    		<c:log message="loadSyncFileToCenter: ${header.CamelFileNameOnly} to ${header.CamelJmsDestinationName}  end" />
+    	</c:route>
+    	
+    	<c:route id="downloadResponseFromCenter"> 
+    		<c:from uri="activemq:queue:hosp-group01_hosp001?requestTimeout=100000&amp;acknowledgementModeName=CLIENT_ACKNOWLEDGE" />
+<!--     		<c:threads poolSize="32" maxQueueSize="32" maxPoolSize="32" /> -->
+    		<c:bean beanType="gyqx.txp.runtime.processor.CheckpointProcessor"></c:bean>
+    		<c:transform>
+	    		<c:groovy>
+	    		headers.CamelFileName = headers.CamelFileNameOnly ; 
+	    		body
+	    		</c:groovy>
+    		</c:transform>
+    		<c:to uri="file://target/txpfiles/from-center/in" />
+    		<c:log message="download ${header.CamelFileNameOnly} end " />
+    	</c:route>
+    	
+    	<c:route id="syncFileToHosDb">
+    		<c:from uri="file://target/txpfiles/from-center/in" />
+    		
+    		<c:unmarshal>
+    			<c:zipFile />
+    		</c:unmarshal>
+    		<c:unmarshal ref="hessian"/>
+
+	    	<c:bean beanType="gyqx.txp.runtime.processor.CheckpointProcessor"></c:bean>
+
+    		<c:transform>
+	    		<c:groovy>
+	    		def message = body as TxpMessage
+	    		headers.TxpMessage = message;
+	    		def result = ClientSyncWorker.getCurrent().doTaskSyncData(message);
+	    		body = result;
+	    		</c:groovy>
+    		</c:transform>
+    		<c:log message="syncFileToHosDb: ${header.TxpMessage.taskName} end" />
+    	</c:route>
+    	
+    	<c:route id="downloadFileFromCenter"> 
+    		<c:from uri="activemq:queue:files_hosp-group01_hosp001?requestTimeout=100000&amp;acknowledgementModeName=CLIENT_ACKNOWLEDGE" />
+<!--     		<c:threads poolSize="32" maxQueueSize="32" maxPoolSize="32" /> -->
+    		<c:bean beanType="gyqx.txp.runtime.processor.CheckpointProcessor"></c:bean>
+    		<c:transform>
+	    		<c:groovy>
+	    		<![CDATA[
+	    		headers.CamelFileName = headers.CamelFileNameOnly ; 
+	    		
+	    		def s=headers.CamelFileName
+	    		def path="d:/camel-download";
+
+				if(s.indexOf('.') > 0)
+				{
+				    def ext = s.substring(s.indexOf('.')+1,s.length())
+				    path += "/$ext/${s[0]}/${s[1]}/"
+				}else{
+				    path +=  "/${s[0]}/${s[1]}/"
+				}
+				headers.CamelFileNameProduced = path + headers.CamelFileName
+	    		body
+	    		]]>
+	    		</c:groovy>
+    		</c:transform>
+    		<c:to uri="file://target/txpfiles/from-center/in" />
+    		<c:log message="download ${header.CamelFileNameOnly} end " />
+    	</c:route>
+    	
+    	<!-- ---------------------------------数据中心-------------------------------------------------- -->
+    	<c:route id="readRequestFromSub">
+    		<c:from uri="activemq:queue:CenterDataSync?requestTimeout=100000" />
+<!--     		<c:threads poolSize="32" maxQueueSize="32" maxPoolSize="32" /> -->
+    		<c:unmarshal>
+    			<c:zipFile />
+    		</c:unmarshal>
+    		<c:unmarshal ref="hessian"/>
+    		<c:log message="${body}" />
+    		<c:transform>
+	    		<c:groovy>
+	    		headers.TxpMessage = body;
+	    		headers.CamelJmsDestinationName = 'hosp-group01_' + headers.TxpMessage.fromId;	    		
+	    		body ;
+	    		</c:groovy>
+    		</c:transform>
+    		<c:choice>
+    			<c:when>
+					<c:groovy >headers.TxpMessage.kind == MessageBodyKind.TablesSyncCompare</c:groovy>					
+					<c:transform>
+			    		<c:groovy>
+			    		def result = ServerSyncWorker.getCurrent().getSyncDataMessage(headers.TxpMessage)
+			    		body = result;
+			    		</c:groovy>
+		    		</c:transform>
+					<c:log message="readRequestFromSub MessageBodyKind.TablesSyncCompare" />
+	    		</c:when>
+	    		<c:when>
+					<c:groovy >headers.TxpMessage.kind == MessageBodyKind.DataClearAndInsert</c:groovy>
+					<c:transform>
+			    		<c:groovy>			    		
+			    		//def result = ServerSyncWorker.getCurrent().getSyncDataMessage(message)
+			    		//body = result;
+			    		println "DataClearAndInsert"
+			    		body = null;
+			    		</c:groovy>
+		    		</c:transform>
+	    		</c:when>
+    		</c:choice>
+    		<c:choice>
+    			<c:when>
+					<c:groovy >body== null</c:groovy>
+					<c:log message="readRequestFromSub body== null" />
+	    		</c:when>
+	    		<c:otherwise>
+		    		<c:marshal ref="hessian"/>
+					<c:marshal >
+						<c:zipFile />
+					</c:marshal>
+		    		<c:log message=" ${header.CamelJmsDestinationName}" />
+		    		<c:to uri="activemq:queue:hosp" />
+	    		</c:otherwise>
+    		</c:choice>
+    		<c:log message="readRequestFromSub: ${header.TxpMessage.fromId} end" />
+    	</c:route>     	
+    	
+    </c:camelContext>
+</beans>

@@ -1,0 +1,40 @@
+select hos_id,hos_goods_id,code,goods_gg,unit,sum(qty) qty,sum(price*qty)/sum(qty) price,sum(qty)*sum(price*qty)/sum(qty) je,mfrs_id,mfrs_name,prov_id,provname,dept_id
+from(SELECT
+v_stockpile_hz.hos_id,
+v_stockpile_hz.stoc_id,
+v_stockpile_hz.hos_goods_id,
+v_stockpile_hz.goods_name,
+v_stockpile_hz.code,
+v_stockpile_hz.goods_gg,
+v_stockpile_hz.unit,
+v_stockpile_hz.qty,
+v_stockpile_hz.price,
+v_stockpile_hz.je,
+v_stockpile_hz.mfrs_id,
+v_stockpile_hz.mfrs_name,
+v_stockpile_hz.prov_id,
+v_stockpile_hz.provname,
+stoc.dept_id
+from (
+
+    select stockpile.hos_id,stockpile.stoc_id,stockpile.hos_goods_id,goods.goods_name,goods.code,goods.goods_gg,goods.unit,
+stockpile.qty -IFNULL(takingstock.qty,0) qty,stockpile.price,stockpile.price*(stockpile.qty-IFNULL(takingstock.qty,0)) je,goods.mfrs_id,mfrs.mfrs_name,goods.prov_id,company.cname provname
+from (SELECT
+hos_id,
+stoc_id,
+hos_goods_id,
+sum(qty) qty,
+sum(qty*price)/sum(qty) price
+from hos_stockpile
+group by hos_id,stoc_id,hos_goods_id) stockpile 
+LEFT JOIN hos_goods_info goods on stockpile.hos_goods_id=goods.id and stockpile.hos_id=goods.hos_id
+LEFT JOIN bas_mfrs_info mfrs on mfrs.id=goods.mfrs_id
+LEFT JOIN bas_company_info company on company.id=goods.prov_id 
+LEFT JOIN (select hos_id,hos_goods_id,stoc_id,sum(qty) qty from hos_taking_stock group by hos_id,hos_goods_id,stoc_id) takingstock on takingstock.hos_id=stockpile.hos_id and stockpile.hos_goods_id=takingstock.hos_goods_id and takingstock.stoc_id=stockpile.stoc_id
+  
+) v_stockpile_hz,stoc_info stoc where v_stockpile_hz.stoc_id=stoc.id) a
+group by hos_id,hos_goods_id,`code`,goods_gg,unit,mfrs_id,mfrs_name,prov_id,provname,dept_id ;
+
+
+
+

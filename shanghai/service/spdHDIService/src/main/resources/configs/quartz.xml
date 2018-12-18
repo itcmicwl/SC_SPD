@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="
+	http://www.springframework.org/schema/context 
+	http://www.springframework.org/schema/context/spring-context-4.0.xsd
+    http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+    http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+    http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd">
+
+	<bean id="upPurconfirmObj" class="gyqx.spdhdi.quartz.UpPurconfirmQuartz"></bean>
+	<bean id="upBalanceObj" class="gyqx.spdhdi.quartz.UpBalanceQuartz"></bean>
+
+	<bean id="upPurconfirmJob" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject" ref="upPurconfirmObj"></property>
+		<property name="targetMethod" value="sendPurconfirmToJDE"></property>
+		<property name="concurrent" value="false"></property>
+	</bean>
+	<bean id="upBalanceJob" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject" ref="upBalanceObj"></property>
+		<property name="targetMethod" value="sendBalanceToJDE"></property>
+		<property name="concurrent" value="false"></property>
+	</bean>
+
+	<!-- <bean id="cronTrigger" class="org.springframework.scheduling.quartz.CronTriggerBean"> -->
+	<!-- <property name="cronExpression" value="0 0/3 * * * ?" /> -->
+	<bean id="upPurconfirmTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerFactoryBean">
+		<property name="jobDetail" ref="upPurconfirmJob"></property>
+		<property name="startDelay" value="120000"></property>
+		<property name="repeatInterval" value="180000"></property>
+	</bean>
+	<bean id="upBalanceTrigger" class="org.springframework.scheduling.quartz.SimpleTriggerFactoryBean">
+		<property name="jobDetail" ref="upBalanceJob"></property>
+		<property name="startDelay" value="120000"></property>
+		<property name="repeatInterval" value="180000"></property>
+	</bean>
+
+
+	<bean id="schedulerFactoryBean"	class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+		<property name="triggers">
+			<list>
+				<!-- <ref bean="upPurconfirmTrigger"></ref>
+				<ref bean="upBalanceTrigger"></ref> -->
+			</list>
+		</property>
+	</bean>
+
+</beans>

@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="gyqx.spdhdi.orderMgr.dao.mapper.IReceiveBillMapper"> 
+<!-- parameterType传入参数类型     resultMap=自己定义的一个返回类型     resultType返回类型 -->
+
+	<sql id="baseSelect">
+			select rcb.id,
+			rcb.bill_id AS billId,
+			rcb.fill_date as fillDate,
+			rcb.distr_bill_id as distrBillId,
+			rcb.purchase_company_id as purchaseCompanyId,
+			purchaseC.cname as purchaseCompanyName,
+			rcb.apply_org_id as applyOrgId,
+			ao.cname as applyOrgName,
+			ao.code as  applyOrgCode,
+			rcb.recieve_org_id as recieveOrgId,
+			ro.cname as recieveOrgName,
+			ro.code as  recieveOrgCode,
+			rcb.prov_id as provId,
+			provC.cname as provName,
+			rcb.reviever_id as revieverId,
+			receiveUser.ename as revieverName,
+			rcb.fillter as fillter,
+			fillterUser.ename as fillterName,
+			rcb.memo as memo,
+			rcb.status as status,
+			rcb.sum_row as sumRow,
+			rcb.version as version
+			 from receive_bill  rcb 
+			LEFT JOIN bas_company_info provC ON rcb.prov_id = provC.id
+			LEFT JOIN bas_company_info purchaseC ON rcb.prov_id = purchaseC.id
+			LEFT JOIN sys_user_org receiveUser on receiveUser.user_id = rcb.reviever_id
+			LEFT JOIN sys_user_org fillterUser on fillterUser.user_id = rcb.fillter
+			LEFT JOIN sys_org ao ON ao.id = rcb.apply_org_id 
+            LEFT JOIN sys_org ro ON ro.id = rcb.apply_org_id 
+	</sql>
+	<select id="getReceiveBillList" resultType="gyqx.spdhdi.orderMgr.vo.ReceiveBillVo"
+		parameterType="gyqx.spdhdi.orderMgr.vo.ReceiveBillVo">
+		<include refid="baseSelect"></include>
+		<where>
+			1=1
+			<if test='billId != null and billId !=""'>
+				and rcb.bill_id =#{billId}
+			</if>
+			<if test='provId != null and provId !=""'>
+				and rcb.prov_id =#{provId}
+			</if>
+			<if test='purchaseCompanyId != null and purchaseCompanyId !=""'>
+				and rcb.purchase_company_id =#{purchaseCompanyId}
+			</if>
+			<if test='arrStatus != null'>
+				and rcb.status in
+				<foreach item="item" index="index" collection="arrStatus" open="("
+					separator="," close=")">
+					#{item}
+				</foreach>
+			</if>
+		</where>
+	</select>
+	<select id="getById" resultType="gyqx.spdhdi.orderMgr.vo.ReceiveBillVo"  parameterType="gyqx.spdhdi.orderMgr.vo.ReceiveBillVo">
+		<include refid="baseSelect"></include>
+		<where>
+			rcb.id =#{id}
+		</where>
+	</select>
+	<select id="getByBillId"  parameterType="gyqx.spdhdi.orderMgr.vo.ReceiveBillVo">
+		<include refid="baseSelect"></include>
+		<where>
+			rcb.bill_id =#{billId}
+		</where>
+	</select>
+ 	<resultMap type="gyqx.spdhdi.orderMgr.vo.ReceiveBillVo" id="receiveBillMap">
+		<id property="id" column="id"/>
+		<result property="billId"  column="bill_id"/>
+		<result property="fillDate"  column="fill_date"/>
+		<result property="purchaseCompanyId"  column="purchase_company_id"/>
+		<result property="applyOrgId"  column="apply_org_id"/>
+		<result property="recieveOrgId"  column="recieve_org_id"/>
+		<result property="provId"  column="prov_id"/>
+		<result property="revieverId"  column="reviever_id"/>
+		<result property="fillter"  column="fillter"/>
+		<result property="memo"  column="memo"/>
+		<result property="status"  column="status"/>
+		<result property="sumRow"  column="sum_row"/>
+		<result property="version"  column="version"/>
+	</resultMap> 
+	<insert id="insert" parameterType="gyqx.spdhdi.orderMgr.vo.ReceiveBillVo">
+		insert into receive_bill
+		(id,bill_id,distr_bill_id,purchase_company_id,apply_org_id,recieve_org_id,prov_id,reviever_id,fillter,memo,status,sum_row,fill_date,version,last_update_datetime)
+		values
+		(#{id},#{billId},#{distrBillId},#{purchaseCompanyId},#{applyOrgId},#{recieveOrgId},#{provId},#{revieverId},
+		#{fillter},#{memo},#{status},#{sumRow},#{fillDate},1,
+		<if test="_databaseId == 'mysql'">
+			sysdate()
+		</if>
+		<if test="_databaseId == 'oracle'">
+			sysdate
+		</if>
+		)
+	</insert>
+	<update id="update" parameterType="gyqx.spdhdi.orderMgr.vo.ReceiveBillVo" >
+		update receive_bill
+		<set>
+			<if test='billId != null'>  
+				bill_id = #{billId},
+			</if>
+			<if test='distrBillId != null'>  
+				distr_bill_id = #{distrBillId},
+			</if> 
+			<if test='fillDate != null'>  
+				fill_date = #{fillDate},
+			</if> 
+			<if test='purchaseCompanyId != null'>  
+				purchase_company_id = #{purchaseCompanyId},
+			</if> 
+			<if test='applyOrgId != null'>  
+				apply_org_id = #{applyOrgId},
+			</if> 
+			<if test='recieveOrgId != null'>  
+				recieve_org_id = #{recieveOrgId},
+			</if> 
+			<if test='provId != null'>  
+				prov_id = #{provId},
+			</if> 
+			<if test='revieverId != null'>  
+				reviever_id = #{revieverId},
+			</if> 
+			<if test='fillter != null'>  
+				fillter = #{fillter},
+			</if> 
+			<if test='memo != null'>  
+				memo = #{memo},
+			</if> 
+			<if test='status != null'>  
+				status = #{status},
+			</if> 
+			<if test='sumRow != null'>  
+				sum_row = #{sumRow},
+			</if> 
+			<if test="_databaseId == 'mysql'">
+				last_update_datetime = sysdate(),
+			</if>
+			<if test="_databaseId == 'oracle'">
+				last_update_datetime = sysdate,
+			</if>
+			version=version+1,
+		</set>
+		<where>
+			and id = #{id}
+			and version= #{version}
+		</where>
+	</update>
+</mapper>

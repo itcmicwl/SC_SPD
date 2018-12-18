@@ -1,0 +1,1 @@
+select m.id,m.code,m.pcode ,m.project_code ,p.cname as project_name from sys_project_menu m LEFT JOIN sys_project p on m.project_code = p.code order by m.project_code,m.code

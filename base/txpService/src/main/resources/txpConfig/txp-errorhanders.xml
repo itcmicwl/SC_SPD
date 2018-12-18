@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+      	 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd  
+           http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd ">
+	
+	<bean id="errorBean" class="gyqx.txp.runtime.processor.ErrorProcessor" />  
+  
+    <bean id="testErrorHandler" class="org.apache.camel.builder.DeadLetterChannelBuilder">  
+	    <property name="deadLetterUri" value="bean:errorBean"/> 
+	    <property name="redeliveryPolicy" ref="networkRedeliveryPolicyConfig"/>
+    </bean>  
+    
+     <bean id="networkDeadLetterErrorHandler" class="org.apache.camel.builder.DeadLetterChannelBuilder">
+     	<property name="deadLetterUri" value="bean:errorBean"/> 
+     	<property name="redeliveryPolicy" ref="networkRedeliveryPolicyConfig"/> 
+     </bean>
+     <bean id="networkRedeliveryPolicyConfig" class="org.apache.camel.processor.RedeliveryPolicy">
+     	<property name="maximumRedeliveries" value="-1"/>
+     	<property name="redeliveryDelay" value="60000"/>
+     </bean> 
+    
+    <bean id="defaultDeadLetterErrorHandler" class="org.apache.camel.builder.DeadLetterChannelBuilder">
+     	<property name="deadLetterUri" value="bean:errorBean"/> 
+     	<property name="redeliveryPolicy" ref="defaultRedeliveryPolicyConfig"/> 
+     </bean>
+     
+    <bean id="defaultRedeliveryPolicyConfig" class="org.apache.camel.processor.RedeliveryPolicy">
+     	<property name="maximumRedeliveries" value="10"/>
+     	<property name="redeliveryDelay" value="600000"/>
+     	<property name="logContinued" value="true"/>
+     </bean> 
+     
+     <bean id="dbDeadLetterErrorHandler" class="org.apache.camel.builder.DeadLetterChannelBuilder">
+     	<property name="deadLetterUri" value="bean:errorBean"/> 
+     	<property name="redeliveryPolicy" ref="dbRedeliveryPolicyConfig"/> 
+     </bean>
+     
+    <bean id="dbRedeliveryPolicyConfig" class="org.apache.camel.processor.RedeliveryPolicy">
+     	<property name="maximumRedeliveries" value="-1"/>
+     	<property name="redeliveryDelay" value="60000"/>
+     </bean> 
+    
+</beans>

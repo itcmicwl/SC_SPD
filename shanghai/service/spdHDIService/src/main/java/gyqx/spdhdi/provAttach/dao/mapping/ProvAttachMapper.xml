@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 引入接口，只要实现接口的方法就会调用对应接口方法的 select id -->
+<mapper namespace="gyqx.spdhdi.provAttach.dao.mapper.IProvAttachMapper">
+	<!-- parameterType传入参数类型 resultMap=自己定义的一个返回类型 resultType返回类型 -->
+	<select id="getAttachList" resultMap="ProvAttachVoMap"
+		parameterType="gyqx.spdhdi.provAttach.vo.ProvAttachVo">
+		<if test="title !='' and title != null">
+            <bind name="searchName" value="'%'+title+'%'"/>
+        </if>
+	    select c.cname as prov_name,b.cname as hos_name,s.ename,pa.* from prov_attach pa 
+		LEFT JOIN bas_company_info b on pa.hos_id=b.id
+		LEFT JOIN bas_company_info c on pa.prov_id=c.id
+		LEFT JOIN sys_user_org s on pa.fill_user=s.user_id
+		<where>
+			1=1 and pa.flag=1
+			<if test="title!=null and title!=''">
+				and pa.title like #{searchName}
+			</if>
+			<if test="type!=null and type!=''">
+				and pa.type = #{type}
+			</if>
+		</where>
+		order by pa.id
+	</select>
+	
+	<select id="getProvList"
+            resultMap="gyqx.spdhdi.mycerts.dao.mapper.ProvJxsqsMapper.BasCompanyInfoJxsqsVoBaseResultMap">
+        <if test="provName != ''">
+            <bind name="name" value="'%'+provName+'%'"/>
+        </if>
+        select id, cname
+        from bas_company_info
+        where kind = 2 and flag != 0
+        <if test="provName != ''">
+            and (cname like #{name} or short_pinyin like #{name})
+        </if>
+    </select>
+	
+	<resultMap type="gyqx.spdhdi.provAttach.vo.ProvAttachVo" id="ProvAttachVoMap">
+		<id property="id" column="id"/> 
+		<result property="hosId" column="hos_id"/>
+		<result property="provId" column="prov_id"/>
+		<result property="title" column="title"/>
+		<result property="content" column="content"/>
+		<result property="filePath" column="file_path"/>
+		<result property="attachType" column="attach_type"/>
+		<result property="fileExt" column="file_ext"/>
+		<result property="fileSize" column="file_size"/>
+		<result property="flag" column="flag"/>
+		<result property="fillUser" column="fill_user"/>
+		<result property="type" column="type"/>
+		<result property="lastUpdateDatetime" column="last_update_datetime"/>
+		<result property="version" column="version"/>
+		<result property="hosName" column="hos_name"/>
+		<result property="provName" column="prov_name"/>
+		<result property="userName" column="ename"/>
+	</resultMap>  
+	
+</mapper>

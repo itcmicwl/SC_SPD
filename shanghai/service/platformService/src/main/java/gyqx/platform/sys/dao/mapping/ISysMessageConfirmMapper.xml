@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="gyqx.platform.sys.dao.mapper.ISysMessageConfirmMapper"> 
+<!-- parameterType传入参数类型     resultMap=自己定义的一个返回类型     resultType返回类型 -->
+	<select id="list"  resultMap="sysMessageConfirmMap" parameterType="gyqx.platform.po.SysMessageConfirm">
+		<![CDATA[
+		select id,message_id,user_id,read_datetime,version from sys_message_confirm
+		]]>
+		<where>
+			and id = #{id}
+		</where>
+	</select>
+ 	<resultMap type="gyqx.platform.po.SysMessageConfirm" id="sysMessageConfirmMap">
+		<id property="id" column="id"/>
+		<result property="messageId"  column="message_id"/>
+		<result property="userId"  column="user_id"/>
+		<result property="readDatetime"  column="read_datetime"/>
+		<result property="version"  column="version"/>
+	</resultMap> 
+	
+	<update id="update" parameterType="gyqx.platform.po.SysMessageConfirm" >
+		update sys_message_confirm
+		<set>
+			<if test='messageId != null'>  
+				message_id = #{messageId},
+			</if> 
+			<if test='userId != null'>  
+				user_id = #{userId},
+			</if> 
+			<if test='readDatetime != null'>  
+				read_datetime = #{readDatetime},
+			</if> 
+			<if test="_databaseId == 'mysql'">
+				last_update_datetime = sysdate(),
+			</if>
+			<if test="_databaseId == 'oracle'">
+				last_update_datetime = sysdate,
+			</if>
+			version=version+1,
+		</set>
+		<where>
+			and id = #{id}
+			and version= #{version}
+		</where>
+	</update>
+	
+	<insert id="insert" parameterType="gyqx.platform.po.SysMessageConfirm" >
+		insert into sys_message_confirm 
+		( id , message_id , user_id , read_datetime , version,last_update_datetime  )
+		values (#{id},#{messageId},#{userId},#{readDatetime},#{version},
+		<if test="_databaseId == 'oracle'">
+			sysdate,
+		</if>
+		<if test="_databaseId == 'mysql'">
+			sysdate(),
+		</if>)
+	</insert>
+	<select id="getProUserMsgCount" resultType="java.lang.Integer">
+		select count(*) from sys_message_confirm smc left join sys_message sm on smc.message_id=sm.id
+		<where>
+			smc.user_id = #{userId，jdbcType=VARCHAR} and sm.project_code= #{projectCode，jdbcType=VARCHAR}
+		</where>
+	</select>
+    <update id="setMsgRead" parameterType="gyqx.platform.po.SysMessageConfirm">
+        update sys_message_confirm
+        <set>
+            <if test="_databaseId == 'mysql'">
+				read_datetime = SYSDATE(),
+				last_update_datetime = sysdate(),
+			</if>
+			<if test="_databaseId == 'oracle'">
+				read_datetime = SYSDATE,
+				last_update_datetime = sysdate,
+			</if>
+            version=version+1,
+        </set>
+        <where>
+            <if test='messageId != null'>
+                and message_id = #{messageId}
+            </if>
+            <if test='userId != null'>
+                and user_id = #{userId}
+            </if>
+        </where>
+    </update>
+</mapper>

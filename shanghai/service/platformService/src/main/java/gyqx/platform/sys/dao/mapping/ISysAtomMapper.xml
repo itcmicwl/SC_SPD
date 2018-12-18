@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 引入接口，只要实现接口的方法就会调用对应接口方法的 select id -->
+<mapper namespace="gyqx.platform.sys.dao.mapper.ISysAtomMapper">
+	<select id="getSysAtomList"  resultType="gyqx.platform.po.SysAtom" parameterType="gyqx.platform.po.SysAtom">
+		select t.id,t.ename,kind,cur_val curVal,max_val maxVal,val_flag valFlag,prefix,suffix,format,remark,status,mt,version
+		 from sys_atom t
+		<where>
+			<if test='ename != null and ename !=""'>  
+				and	t.ename like CONCAT('%',#{ename},'%')  
+			</if> 
+			<if test='remark != null and remark !=""'>  
+			 	and t.remark like CONCAT('%',#{remark},'%')  
+			</if> 
+		</where>
+	</select> 	
+</mapper>

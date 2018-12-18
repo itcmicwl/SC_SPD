@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 引入接口，只要实现接口的方法就会调用对应接口方法的 select id -->
+<mapper namespace="gyqx.spdhdi.baseData.dao.mapper.IBasGoodsInfoMapper">
+	<!-- parameterType传入参数类型 resultMap=自己定义的一个返回类型 resultType返回类型 -->
+	<select id="getBasGoodsInfoList" resultMap="bGoodsVoMap"
+		parameterType="gyqx.spdhdi.baseData.vo.BasGoodsInfoVo">
+		select m.mfrs_name as mfrsName,bg.* from  bas_goods_info  bg  
+	     left JOIN bas_mfrs_info m  on bg.mfrs_id = m.id
+		<where>
+			1=1 and bg.flag=1
+			<if test='goodsName != null and goodsName !=""'>
+			 <bind name="goodsName" value="'%' + goodsName + '%'" />
+				and   
+				(
+					bg.goods_name like  #{goodsName} 
+					or bg.short_pinyin like  #{goodsName}
+					or bg.goods_gg like  #{goodsName}
+				)
+			
+			</if>
+			<if test='mfrsName != null and mfrsName !=""'>
+			 <bind name="mfrsName" value="'%' + mfrsName + '%'" />
+				and m.mfrs_name like  #{mfrsName}  
+			
+			</if>
+			order by bg.id
+		</where>
+	</select>
+	
+	<resultMap type="gyqx.spdhdi.baseData.vo.BasGoodsInfoVo" id="bGoodsVoMap">
+		<id property="id" column="id"/>
+		<id property="code" column="code"/>
+		<result property="goodsName"  column="goods_name"/>
+		<result property="shortPinyin"  column="short_pinyin"/>
+		<result property="goodsGg"  column="goods_gg"/>
+		<result property="brand"  column="brand"/>
+		<result property="made"  column="made"/>
+		<result property="mfrsId"  column="mfrs_id"/>
+		<result property="unit"  column="unit"/>
+		<result property="packeage"  column="packeage"/>
+		<result property="masterCode"  column="master_code"/>
+	    <result property="mfrsCode"  column="mfrs_code"/>
+		<result property="kindCode"  column="kind_code"/>
+		<result property="kind68code"  column="kind_68code"/>
+		<result property="fieldCode1"  column="field_code1"/>
+		<result property="fieldCode2"  column="field_code2"/>
+		<result property="fieldCode3" column="field_code3"/>   
+		<result property="fieldCode4" column="field_code4"/>
+		<result property="certificateCode" column="certificate_code"/>
+		<result property="lbsx" column="lbsx"/>
+		<result property="flag" column="flag"/>   
+		<result property="remark" column="remark"/>
+		<result property="uid" column="uxid"/>
+		<result property="fillDate" column="fill_date"/>   
+		<result property="lastUpdateDatetime" column="last_update_datetime"/>
+		<result property="version" column="version"/>
+		<result property="mfrsName" column="mfrsName"/>
+	</resultMap>  
+	
+	<resultMap type="gyqx.spdhdi.po.BasGoodsInfo" id="bGoodsMap">
+		<id property="id" column="id"/>
+		<id property="code" column="code"/>
+		<result property="goodsName"  column="goods_name"/>
+		<result property="shortPinyin"  column="short_pinyin"/>
+		<result property="goodsGg"  column="goods_gg"/>
+		<result property="brand"  column="brand"/>
+		<result property="made"  column="made"/>
+		<result property="mfrsId"  column="mfrs_id"/>
+		<result property="unit"  column="unit"/>
+		<result property="packeage"  column="packeage"/>
+		<result property="masterCode"  column="master_code"/>
+	    <result property="mfrsCode"  column="mfrs_code"/>
+		<result property="kindCode"  column="kind_code"/>
+		<result property="kind68code"  column="kind_68code"/>
+		<result property="fieldCode1"  column="field_code1"/>
+		<result property="fieldCode2"  column="field_code2"/>
+		<result property="fieldCode3" column="field_code3"/>   
+		<result property="fieldCode4" column="field_code4"/>
+		<result property="certificateCode" column="certificate_code"/>
+		<result property="lbsx" column="lbsx"/>  
+		<result property="flag" column="flag"/>    
+		<result property="remark" column="remark"/>
+		<result property="uid" column="uxid"/>
+		<result property="fillDate" column="fill_date"/>   
+		<result property="lastUpdateDatetime" column="last_update_datetime"/>
+		<result property="version" column="version"/>
+	</resultMap>  
+	
+</mapper>

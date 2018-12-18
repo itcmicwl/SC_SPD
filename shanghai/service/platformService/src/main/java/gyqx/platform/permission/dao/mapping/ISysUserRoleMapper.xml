@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="gyqx.platform.permission.dao.mapper.ISysUserRoleMapper">
+<!-- parameterType传入参数类型     resultMap=自己定义的一个返回类型     resultType返回类型 -->
+	<select id="list"  resultMap="sysUserRoleMap" parameterType="gyqx.platform.po.SysUserRole">
+		<![CDATA[
+		select id,user_id,role_id,uxid,mt,version from sys_user_role
+		]]>
+		<where>
+			and id = #{id}
+		</where>
+	</select>
+	<select id="userRoleLst" resultType="gyqx.platform.permission.vo.UserRoleVo" databaseId="mysql">
+		SELECT u.user_id as userId,u.ename as userName,sul.user_login_code as loginCode,o.ename as orgName ,o.code as orgCode,o.corp_id as hosId,
+		GROUP_CONCAT(r.cname) as roleNames,GROUP_CONCAT(r.id) as roleIds
+		from sys_user_org  u
+		LEFT JOIN sys_org o on u.org_id = o.id
+		LEFT JOIN sys_user_role ur on u.user_id = ur.user_id
+		LEFT JOIN sys_role r on ur.role_id = r.id
+		left join sys_user_login sul on sul.uxid = u.user_id
+		where o.corp_id=#{hosId}
+		<if test="orgCode != null and orgCode !=''">
+			<bind name="orgCode_bind" value="'' + orgCode + '%'" />
+			and o.code  LIKE  #{orgCode_bind}
+		</if>
+		GROUP BY userId,userName,user_login_code,orgName,orgCode,hosId ORDER BY orgName
+	</select>
+	<select id="userRoleLst" resultType="gyqx.platform.permission.vo.UserRoleVo" databaseId="oracle">
+		SELECT u.user_id userId,u.ename userName,sul.user_login_code loginCode,o.ename orgName ,o.code orgCode,o.corp_id hosId,
+		listagg(r.cname,',') WITHIN GROUP(ORDER BY r.id) roleNames,
+		listagg(r.id,',') WITHIN GROUP(ORDER BY r.id) roleIds
+		from sys_user_org  u
+		LEFT JOIN sys_org o on u.org_id = o.id
+		LEFT JOIN sys_user_role ur on u.user_id = ur.user_id
+		LEFT JOIN sys_role r on ur.role_id = r.id
+		where o.corp_id=#{hosId}
+		<if test="orgCode != null and orgCode !=''">
+			<bind name="orgCode_bind" value="'' + orgCode + '%'" />
+			and o.code  LIKE  #{orgCode_bind}
+		</if>
+		GROUP BY u.user_id,u.ename,sul.user_login_code,o.ename,o.code ,o.corp_id
+	</select>
+ 	<resultMap type="gyqx.platform.po.SysUserRole" id="sysUserRoleMap">
+		<id property="id" column="id"/>
+		<result property="userId"  column="user_id"/>
+		<result property="roleId"  column="role_id"/>
+		<result property="uxid"  column="uxid"/>
+		<result property="mt"  column="mt"/>
+		<result property="version"  column="version"/>
+	</resultMap> 
+	
+	<update id="update" parameterType="gyqx.platform.po.SysUserRole" >
+		update sys_user_role
+		<set>
+			<if test='userId != null'>  
+				user_id = #{userId},
+			</if> 
+			<if test='roleId != null'>  
+				role_id = #{roleId},
+			</if> 
+			<if test='uxid != null'>  
+				uxid = #{uxid},
+			</if> 
+			<if test='mt != null'>  
+				mt = #{mt},
+			</if> 
+			version=version+1,
+		</set>
+		<where>
+			and id = #{id}
+			and version= #{version}
+		</where>
+	</update>
+	
+	<insert id="insert" parameterType="gyqx.platform.po.SysUserRole" databaseId="mysql">
+		insert into sys_user_role 
+		( id , user_id , role_id , uxid , mt , version  )
+		values (UUID(),#{userId},#{roleId},#{uxid},sysdate(),1)
+	</insert>
+	<insert id="insert" parameterType="gyqx.platform.po.SysUserRole" databaseId="oracle">
+		insert into sys_user_role
+		( id , user_id , role_id , uxid , mt , version  )
+		values (sys_guid(),#{userId},#{roleId},#{uxid},sysdate,1)
+	</insert>
+	<insert id="insertBatch" parameterType="java.util.List" databaseId="mysql">
+		insert into sys_user_role
+		( id , user_id , role_id , uxid , mt , version  )
+		values
+		<foreach collection="list" item="item" index="index"
+				 separator=",">
+			(UUID(),#{item.userId},#{item.roleId},#{item.uxid},sysdate(),1)
+		</foreach>
+	</insert>
+	<insert id="insertBatch" parameterType="java.util.List" databaseId="oracle">
+		insert into sys_user_role
+		( id , user_id , role_id , uxid , mt , version  )
+		<foreach collection="list" item="item" index="index"
+				 separator="union all">
+			(SELECT sys_guid(),#{item.userId},#{item.roleId},#{item.uxid},sysdate,1 from dual)
+		</foreach>
+	</insert>
+	<delete id="delByUserId" parameterType="java.lang.String">
+		DELETE
+		FROM sys_user_role
+		WHERE user_id=#{userId}
+	</delete>
+</mapper>

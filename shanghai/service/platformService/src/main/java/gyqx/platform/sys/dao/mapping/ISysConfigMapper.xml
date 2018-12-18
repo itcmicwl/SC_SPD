@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 引入接口，只要实现接口的方法就会调用对应接口方法的 select id -->
+<mapper namespace="gyqx.platform.sys.dao.mapper.ISysConfigMapper"> 
+<!-- parameterType传入参数类型     resultMap=自己定义的一个返回类型     resultType返回类型 -->
+	<select id="getSysConfigList"  resultType="gyqx.platform.po.SysConfig"  parameterType="gyqx.platform.po.SysConfig">
+		select * from sys_config t
+		<where>
+			<if test='ename != null and ename !=""'>  
+				and t.ename like CONCAT('%',#{ename},'%')  
+			</if> 
+			<if test='remark != null and remark !=""'>  
+				and t.remark like CONCAT('%',#{remark},'%')  
+			</if> 
+			<if test='val != null and val !=""'>  
+				and t.val like CONCAT('%',#{val},'%')  
+			</if> 
+		</where>
+	</select>
+	<select id="getSysConfigByid"  resultType="gyqx.platform.po.SysConfig">
+		select * from sys_config t 
+		<where>
+			t.id = #{id}
+		</where>
+	</select>
+	<select id="getSysConfigByName"  resultType="gyqx.platform.po.SysConfig">
+		select * from sys_config t 
+		<where>
+			t.ename = #{ename}
+		</where>
+	</select>
+	<select id="existSysConfig"  resultType="java.lang.Integer">
+		select count(*) from sys_config t 
+		<where>
+			<if test='ename != null and ename !=""'>  
+				and t.ename =#{ename}  
+			</if>
+			<if test='id != null and id !=""'>  
+				and t.id  <![CDATA[<>]]> #{id}
+			</if>
+		</where>
+	</select>
+	<insert id="insertSysConfig" parameterType="gyqx.platform.po.SysConfig">
+	  INSERT INTO sys_config(id,ename,val,format,remark,status,mt,version) 
+	  VALUES (#{id}, #{ename}, #{val}, #{format}, #{remark}, #{status},
+		<if test="_databaseId == 'oracle'">
+			sysdate,
+		</if>
+		<if test="_databaseId == 'mysql'">
+			sysdate(),
+		</if>
+			  1)
+	</insert>	
+	<update id="setStatus" parameterType="gyqx.platform.po.SysConfig">
+		update sys_config t set
+		t.status = #{status},
+		t.mt = #{mt},
+		version = version+1	
+		where id=#{id}
+	</update>
+	<update id="setSysConfig" parameterType="gyqx.platform.po.SysConfig">
+		update sys_config set
+		<if test='val != null and val !=""'>  
+				val = #{val} ,
+		</if> 
+		<if test='format != null and format !=""'>  
+				format = #{format}, 
+		</if> 
+		<if test='remark != null and remark !=""'>  
+				remark = #{remark},
+		</if> 
+		<if test='status != null and status !=""'>  
+				status = #{status},
+		</if> 
+		version = version+1,
+		mt = #{mt}	
+		where id=#{id}
+	</update>
+</mapper>

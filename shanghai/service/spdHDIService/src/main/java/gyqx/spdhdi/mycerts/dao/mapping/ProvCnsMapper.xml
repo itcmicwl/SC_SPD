@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="gyqx.spdhdi.mycerts.dao.mapper.ProvCnsMapper">
+    <resultMap id="ProvCnsVoBaseResultMap" type="gyqx.spdhdi.mycerts.vo.ProvCnsVo">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="prov_id" property="provId" jdbcType="VARCHAR"/>
+        <result column="hos_id" property="hosId" jdbcType="VARCHAR"/>
+        <result column="hos_name" property="hosName" jdbcType="VARCHAR"/>
+        <result column="provName" property="provName" jdbcType="VARCHAR"/>
+        <result column="file_path_cns" property="filePathCns" jdbcType="VARCHAR"/>
+        <result column="expdt_begin_date" property="expdtBeginDate" jdbcType="TIMESTAMP"/>
+        <result column="expdt_end_date" property="expdtEndDate" jdbcType="TIMESTAMP"/>
+        <result column="version" property="version" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <select id="getCns" resultMap="ProvCnsVoBaseResultMap">
+        <if test="hosName != '' and hosName != null">
+            <bind name="name" value="'%'+hosName+'%'"/>
+        </if>
+        SELECT
+        cns.id, prov_id, hos_id, hos.cname as hos_name, file_path_wts as file_path_cns, expdt_begin_date,
+        expdt_end_date, cns.version
+        FROM prov_cns cns
+        LEFT OUTER JOIN bas_company_info hos ON hos.id = cns.hos_id
+        WHERE
+        cns.prov_id = #{provId}
+        and hos.kind = 1
+        and hos.flag != 0
+        <if test="start != null">
+            and cns.expdt_begin_date &gt;= #{start}
+        </if>
+        <if test="end != null">
+            and cns.expdt_end_date &lt;= #{end}
+        </if>
+        <if test="hosName != '' and hosName != null">
+            and (hos.cname like #{name} or hos.short_pinyin like #{name})
+        </if>
+    </select>
+
+    <select id="getCnsListByProv" resultMap="ProvCnsVoBaseResultMap">
+        SELECT
+        cns.id, prov_id, hos_id, comp.cname as hos_name, file_path_wts as file_path_cns, expdt_begin_date,
+        expdt_end_date, cns.version
+        FROM prov_cns cns
+        LEFT OUTER JOIN bas_company_info comp ON comp.id = cns.hos_id
+        WHERE
+        cns.prov_id = #{compId}
+        and comp.kind = 1
+        and comp.flag != 0
+
+        <if test="start != null and end != null and start gte end">
+            and cns.expdt_end_date <![CDATA[ <= ]]> #{end}
+        </if>
+        <if test="start != null and end != null and start lt end">
+            and cns.expdt_end_date <![CDATA[ <= ]]> #{end} and  cns.expdt_end_date <![CDATA[ > ]]>  #{start}
+        </if>
+        <if test="aboutName != '' and aboutName != null">
+            <bind name="searchName" value="'%'+aboutName+'%'"/>
+            and (comp.cname like #{searchName})
+        </if>
+
+        order by comp.cname
+
+    </select>
+
+    <select id="getCnsListByHos" resultMap="ProvCnsVoBaseResultMap">
+        SELECT
+        cns.id, prov_id, hos_id, comp.cname as provName, file_path_wts as file_path_cns, expdt_begin_date,
+        expdt_end_date, cns.version
+        FROM prov_cns cns
+        LEFT OUTER JOIN bas_company_info comp ON comp.id = cns.prov_id
+        WHERE
+        cns.hos_id = #{compId}
+        and (comp.kind = 2 or comp.kind =4)
+        and comp.flag != 0
+        <if test="start != null and end != null and start gte end">
+            and cns.expdt_end_date <![CDATA[ <= ]]> #{end}
+        </if>
+        <if test="start != null and end != null and start lt end">
+            and cns.expdt_end_date <![CDATA[ <= ]]> #{end} and  cns.expdt_end_date <![CDATA[ > ]]>  #{start}
+        </if>
+        <if test="aboutName != '' and aboutName != null">
+            <bind name="searchName" value="'%'+aboutName+'%'"/>
+            and (comp.cname like #{searchName})
+        </if>
+
+        order by comp.cname
+    </select>
+
+
+
+</mapper>

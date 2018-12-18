@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:camel="http://camel.apache.org/schema/spring"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+      	 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd  
+           http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+           http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+<!-- 	<bean id="dataSourceCenter" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">   -->
+<!-- 	    <property name="driverClassName" value="${client.db.driverClassName}" />   -->
+<!-- 	    <property name="url" value="${center.db.url}" /> -->
+<!-- 	    <property name="username" value="${center.db.username}" /> -->
+<!-- 	    <property name="password" value="${center.db.password}" /> -->
+<!-- 	     <property name="initialSize" value="5"/> -->
+<!-- 	     <property name="maxTotal" value="200"/> -->
+<!-- 	    <property name="maxIdle" value="10"/> -->
+<!-- 	     <property name="minIdle" value="10"/> -->
+<!-- 	     <property name="validationQuery" value="SELECT 1"></property> -->
+<!-- 		 <property name="testWhileIdle" value="true"></property> -->
+<!-- 		 <property name="testOnBorrow" value="true"></property> -->
+<!-- 		 <property name="timeBetweenEvictionRunsMillis" value="3600000"></property> -->
+<!-- 		<property name="numTestsPerEvictionRun" value="50"></property> -->
+<!-- 		<property name="minEvictableIdleTimeMillis" value="120000"></property> -->
+<!-- 		 <property name="removeAbandonedOnBorrow" value="true"/> -->
+<!-- 		 <property name="removeAbandonedOnMaintenance" value="true"/> -->
+<!-- 		 <property name="removeAbandonedTimeout" value="6000000"/>	      -->
+<!-- 	</bean>  -->
+	
+    <bean id="txCenter" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">    
+        <property name="dataSource" ref="dataSourceCenter"/>  
+    </bean>   
+	
+	<bean id="dataSourceCenter" class="oracle.jdbc.pool.OracleConnectionPoolDataSource" destroy-method="close">
+	    <property name="URL" value="${center.db.url}" />
+	    <property name="user" value="${center.db.username}" />
+	    <property name="password" value="${center.db.password}" />
+	    <property name="connectionCacheProperties">
+	        <props merge="default">
+	            <prop key="MinLimit">5</prop>
+	            <prop key="MaxLimit">50</prop>
+	        </props>
+	    </property>
+	</bean>	    
+    
+</beans>

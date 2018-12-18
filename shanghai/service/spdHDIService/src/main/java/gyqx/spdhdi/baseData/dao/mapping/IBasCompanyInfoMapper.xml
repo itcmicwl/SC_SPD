@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 引入接口，只要实现接口的方法就会调用对应接口方法的 select id -->
+<mapper namespace="gyqx.spdhdi.baseData.dao.mapper.IBasCompanyInfoMapper">
+	<!-- parameterType传入参数类型 resultMap=自己定义的一个返回类型 resultType返回类型 -->
+	<select id="getBasCompanyInfoList" resultMap="bCompanyMap"
+		parameterType="gyqx.spdhdi.po.BasCompanyInfo">
+		select * from bas_company_info 
+		<where>
+			1=1
+			<if test='cname != null and cname !=""'>
+			 <bind name="cname" value="'%' + cname + '%'" />
+				and cname LIKE  #{cname}  
+			
+			</if>
+			<if test='kind != null and kind !=""'>
+			
+				and kind =  #{kind}  
+			
+			</if>
+		 and flag=1	order by id
+		</where>
+	</select>
+	
+	
+	<insert id="insert" parameterType="gyqx.spdhdi.po.BasCompanyInfo" databaseId="oracle">
+		INSERT INTO bas_company_info
+		  (id,
+		   code,
+		   cname,
+		   another_name,
+		   short_pinyin,
+		   Reg_code,
+		   jyxk_code,
+		   nsrsb_code,
+		   kind,
+		   legal,
+		   address,
+		   linkman,
+		   contact_way,
+		   contact_fax,  
+		   logo,
+		   master_code,
+		   post_code,
+		   email,
+		   remark,
+		   erp_code,
+		   is_supply,
+		   is_three_in_one,
+		   flag,
+		   uxid,
+		   fill_date,
+		   last_update_datetime,
+		   version)
+		VALUES
+		  (#{id},
+		   #{code},
+		   #{cname},
+		   #{anotherName},
+		   #{shortPinyin},
+		   #{regCode},
+		   #{jyxkCode},
+		   #{nsrsbCode},
+		   #{kind},
+		   #{legal},
+		   #{address},
+		   #{linkman},
+		   #{contactWay},
+		   #{contactFax},
+		   #{logo},
+		   #{masterCode},
+		   #{postCode},
+		   #{email},
+		   #{remark},
+		   #{erpCode},
+		   #{isSupply},
+		   #{isThreeInOne},
+		   '1',
+		   #{uid},
+		   sysdate,
+		   sysdate,
+		   0)
+	</insert>
+
+	<insert id="insert" parameterType="gyqx.spdhdi.po.BasCompanyInfo" databaseId="mysql">
+		INSERT INTO bas_company_info
+		  (id,
+		   code,
+		   cname,
+		   another_name,
+		   short_pinyin,
+		   Reg_code,
+		   jyxk_code,
+		   nsrsb_code,
+		   kind,
+		   legal,
+		   address,
+		   linkman,
+		   contact_way,
+		   contact_fax,  
+		   logo,
+		   master_code,
+		   post_code,
+		   email,
+		   remark,
+		   erp_code,
+		   is_supply,
+		   is_three_in_one,
+		   flag,
+		   uxid,
+		   fill_date,
+		   last_update_datetime,
+		   version)
+		VALUES
+		  (#{id},
+		   #{code},
+		   #{cname},
+		   #{anotherName},
+		   #{shortPinyin},
+		   #{regCode},
+		   #{jyxkCode},
+		   #{nsrsbCode},
+		   #{kind},
+		   #{legal},
+		   #{address},
+		   #{linkman},
+		   #{contactWay},
+		   #{contactFax},
+		   #{logo},
+		   #{masterCode},
+		   #{postCode},
+		   #{email},
+		   #{remark},
+		   #{erpCode},
+		   #{isSupply},
+		   #{isThreeInOne},
+		   '1',
+		   #{uid},
+		   sysdate(),
+		   sysdate(),
+		   0)
+	</insert>	
+	
+	<resultMap type="gyqx.spdhdi.po.BasCompanyInfo" id="bCompanyMap">
+		<id property="id" column="id"/>
+		<id property="code" column="code"/>
+		<result column="mfrs_kind" property="mfrsKind" jdbcType="VARCHAR" />
+		<result column="agent_name" property="agentName" jdbcType="VARCHAR" />
+		<result column="product_code" property="productCode" jdbcType="VARCHAR" />
+		<result column="record_card" property="recordCard" jdbcType="VARCHAR" />
+		
+		<result property="cname"  column="cname"/>
+		<result property="anotherName"  column="another_name"/>
+		<result property="shortPinyin"  column="short_pinyin"/> 
+		<result property="regCode"  column="Reg_code"/>
+		<result property="jyxkCode"  column="jyxk_code"/>
+		<result property="nsrsbCode"  column="nsrsb_code"/>
+		<result property="kind"  column="kind"/>
+	    <result property="legal"  column="legal"/>
+		<result property="address"  column="address"/>
+		<result property="linkman"  column="linkman"/>
+		<result property="contactWay"  column="contact_way"/>
+		<result property="contactFax"  column="contact_fax"/>
+		<result property="logo" column="logo"/>
+		<result property="masterCode" column="master_code"/>   
+		<result property="postCode" column="post_code"/>  
+		<result property="email" column="email"/>
+		<result property="remark" column="remark"/>
+		<result property="erpCode" column="erp_code"/>
+		<result property="isSupply" column="is_supply"/>
+		<result property="isThreeInOne" column="is_three_in_one"/>   
+		<result property="flag" column="flag"/>
+		<result property="uid" column="uxid"/>
+		<result property="fillDate" column="fill_date"/>   
+		<result property="lastUpdateDatetime" column="last_update_datetime"/>
+		<result property="version" column="version"/>
+	</resultMap>  
+	
+</mapper>

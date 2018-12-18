@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="gyqx.platform.permission.dao.mapper.IOrgAdminUserMapper"> 
+
+	<select id="list"  resultMap="orgAdminUserMap" databaseId="mysql">
+		SELECT
+			 us.id ,us.user_code,ou.ename,ou.job,org.cname as orgName,ifnull(admins.user_id,'0') as flag
+			FROM
+			sys_user us INNER JOIN sys_user_org ou on us.id = ou.user_id
+			INNER JOIN sys_org org on ou.org_id = org.id
+			LEFT JOIN
+			( select user1.user_id,user1.ename from sys_user_org user1 INNER JOIN sys_org org on user1.org_code = org.code
+			  where org.corp_id = #{corpId}  and exists
+			  (select * from  sys_user_role ur INNER JOIN sys_role role on ur.role_id = role.id
+				 where ur.user_id = user1.user_id and  role.kind = '11'
+			  )
+			) as admins
+			on us.id = admins.user_id  where org.corp_id = #{corpId}
+			<if test='orgId != null and orgId !="" and orgId != "-1"'>
+				and org.id = #{orgId}
+			</if>
+			order by  ou.ordinal
+	</select>
+	
+	<select id="list"  resultMap="orgAdminUserMap" databaseId="oracle">
+		SELECT
+			 us.id ,us.user_code,ou.ename,ou.job,org.cname as orgName,nvl(admins.user_id,'0') as flag
+			FROM
+			sys_user us INNER JOIN sys_user_org ou on us.id = ou.user_id
+			INNER JOIN sys_org org on ou.org_id = org.id
+			LEFT JOIN
+			( select user1.user_id,user1.ename from sys_user_org user1 INNER JOIN sys_org org on user1.org_code = org.code
+			  where org.corp_id = #{corpId}  and exists
+			  (select * from  sys_user_role ur INNER JOIN sys_role role on ur.role_id = role.id
+				 where ur.user_id = user1.user_id and  role.kind = '11'
+			  )
+			) admins
+			on us.id = admins.user_id  where org.corp_id = #{corpId}
+			<if test='orgId != null and orgId !="" and orgId != "-1"'>
+				and org.id = #{orgId}
+			</if>
+			 order by  ou.ordinal
+	</select>
+
+	<select id="listOrgUsers" resultMap="orgAdminUserMap">
+	<![CDATA[
+	SELECT 
+ us.id ,us.user_code,ou.ename,ou.job,org.cname as orgName,ou.status as flag
+FROM
+sys_user us INNER JOIN sys_user_org ou on us.id = ou.user_id
+INNER JOIN sys_org org on ou.org_id = org.id 
+	]]>
+		<where>		
+org.corp_id = #{corpId} and org.id = #{orgId}
+		</where>
+		order by  ou.ordinal
+	</select>		
+		
+	<select id="listUsersByRoles" >
+		<![CDATA[
+			SELECT
+ us.id ,us.user_code,ou.ename,ou.job,org.cname as orgName,ou.status as flag
+FROM
+sys_user us INNER JOIN sys_user_org ou on us.id = ou.user_id
+INNER JOIN sys_org org on ou.org_id = org.id 
+INNER JOIN sys_user_role ur on us.id = ur.id 
+
+		]]>
+		<where>
+		org.corp_id = #{corpId} and ur.role_id in 
+		<foreach collection="roleIds" index="index" item="roleId" open="(" separator="," close=")">
+             #{roleId} 
+        </foreach> 
+		</where>
+		order by org.cname , ou.ordinal
+	</select>
+ 	<resultMap type="gyqx.platform.permission.vo.OrgAdminUser" id="orgAdminUserMap">
+		<result property="id"  column="id"/>
+		<result property="userCode"  column="user_code"/>
+		<result property="ename"  column="ename"/>
+		<result property="job"  column="job"/>
+		<result property="orgName"  column="orgName"/>
+		<result property="flag"  column="flag"/>
+	</resultMap> 	
+	
+</mapper>

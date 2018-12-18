@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="
+	http://www.springframework.org/schema/context 
+	http://www.springframework.org/schema/context/spring-context-4.0.xsd
+    http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+    http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+    http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd">
+	
+    <bean id="simpleDao" class="common.db.SimpleDao" lazy-init="false">
+    	<constructor-arg >
+    		<ref bean="dataSource" />
+    	</constructor-arg>
+    	<constructor-arg >
+    		<value>gyqx.platform.po,gyqx.platform.base.po</value>
+    	</constructor-arg>
+    </bean>	
+    
+    <bean id="securityContext" class="common.security.SecurityContext" >
+    </bean>
+     <bean id="serviceExporter" class="org.springframework.remoting.httpinvoker.HttpInvokerServiceExporter">  
+        <property name="service" ref="sysOrgService" />  
+        <property name="serviceInterface" value="gyqx.platform.sys.service.ISysOrgService" />  
+    </bean> 
+    
+      <bean id="urlMapping"  class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">  
+        <property name="mappings">  
+            <props>  
+               <prop key="/sysOrg.service">serviceExporter</prop>  
+            </props>  
+        </property>  
+    </bean>   
+
+</beans>

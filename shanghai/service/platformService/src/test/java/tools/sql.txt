@@ -1,0 +1,3 @@
+select m.mfrs_name as mfrsName,pg.* from  prov_goods_info  pg  
+	    JOIN bas_mfrs_info m 
+	    on pg.mrfs_id = m.id

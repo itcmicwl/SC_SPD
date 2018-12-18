@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="gyqx.spdherp.basedatamaint.dao.mapper.BarcodeParseMapper">
+    <!--  <resultMap id="BaseResultMap" type="gyqx.spdhdi.basedatamaint.vo.BarcodeRuleVo" >
+        <id column="id" property="id" jdbcType="VARCHAR" />
+        <result column="barcode" property="barcode" jdbcType="VARCHAR" />
+        <result column="barcode_len" property="barcodeLen" jdbcType="INTEGER" />
+        <result column="barleader" property="barleader" jdbcType="VARCHAR" />
+        <result column="consumables_position" property="consumablesPosition" jdbcType="INTEGER" />
+        <result column="consumables_len" property="consumablesLen" jdbcType="INTEGER" />
+        <result column="is_main" property="isMain" jdbcType="CHAR" />
+        <result column="period_position" property="periodPosition" jdbcType="INTEGER" />
+        <result column="period_format" property="periodFormat" jdbcType="VARCHAR" />
+        <result column="production_position" property="productionPosition" jdbcType="INTEGER" />
+        <result column="production_len" property="productionLen" jdbcType="INTEGER" />
+        <result column="sign1_position" property="sign1Position" jdbcType="INTEGER" />
+        <result column="sign1" property="sign1" jdbcType="VARCHAR" />
+        <result column="sign2_position" property="sign2Position" jdbcType="INTEGER" />
+        <result column="sign2" property="sign2" jdbcType="VARCHAR" />
+        <result column="tracknum_position" property="tracknumPosition" jdbcType="INTEGER" />
+        <result column="tracknum_len" property="tracknumLen" jdbcType="INTEGER" />
+        <result column="flag" property="flag" jdbcType="CHAR"/>
+        <result column="version" property="version" jdbcType="INTEGER" />
+      </resultMap>-->
+    <select id="listByBarcodeLen"
+            resultMap="gyqx.spdherp.basedatamaint.dao.mapper.BarcodeRuleMapper.BarcodeRuleVoResultMap">
+      SELECT
+        id, barcode, barcode_len, barleader, consumables_position, consumables_len, is_main, period_position,
+        period_format, production_position, production_len, sign1_position, sign1, sign2_position, sign2,
+        tracknum_position, tracknum_len, flag, version
+      FROM
+        bas_barcode_rules
+      WHERE
+        barcode_len = #{barcodeLen} AND flag = '1'
+  </select>
+    <select id="listHisNameById" resultType="java.lang.String">
+        SELECT his_name
+        FROM prov_goods_hos
+        WHERE hos_id = #{corpId} AND
+        <foreach collection="goodsList" item="item" open="(" close=")" separator="OR">
+            prov_goodsid = #{item.id}
+        </foreach>
+    </select>
+    <select id="listProvGoodsHosId" resultType="java.lang.String">
+        SELECT prov_goodsid
+        FROM v_pro_hos_goodsinfo
+        WHERE hos_id = #{hosId} AND prov_id = #{provId} AND mfrs_goods_code = #{goodsNo}
+    </select>
+    <select id="listHosGoodsId" resultType="java.lang.String">
+        SELECT id
+        FROM hos_goods_info
+        WHERE hos_id = #{hosId} AND mfrs_code = #{goodsNo}
+    </select>
+    <select id="listHosPackageInfo" resultMap="HosPackageInfoVoResultMap">
+        SELECT
+            hpi.package_id,
+            hpi.prov_id,
+            hpi.prov_name,
+            hpi.goods_id,
+            hpi.goods_name,
+            hpi.goods_gg,
+            hpi.mfrs_id,
+            hpi.mfrs_name,
+            hpi.made,
+            hpi.packet_code,
+            hpi.batch_code,
+            hpi.sterilization_date,
+            hpi.sterilization_code,
+            hpi.sterilization_end_date,
+            hpi.expdt_end_date,
+            hpi.unit,
+            hpi.qty,
+            hpi.packet_qty,
+            hpbd.goods_batch_id,
+            hpbd.in_price,
+            hpbd.in_time,
+            hpbd.qty AS goods_qty
+        FROM
+            hos_package_info hpi
+            LEFT OUTER JOIN hos_package_batch_detail hpbd ON ( hpbd.p_package_id = hpi.package_id AND hpbd.row_id = hpi.row_id AND hpbd.goods_id = hpi.goods_id )
+        WHERE
+            hpi.package_id = #{barcodeStr} AND hpi.hos_id = #{hosId}
+    </select>
+
+    <resultMap type="gyqx.spdherp.basedatamaint.vo.HosPackageInfoVo" id="HosPackageInfoVoResultMap">
+        <result property="packageId" column="package_id"/>
+        <result property="provId" column="prov_id"/>
+        <result property="provName" column="prov_name"/>
+        <result property="goodsId" column="goods_id"/>
+        <result property="goodsName" column="goods_name"/>
+        <result property="goodsGg" column="goods_gg"/>
+        <result property="mfrsId" column="mfrs_id"/>
+        <result property="mfrsName" column="mfrs_name"/>
+        <result property="made" column="made"/>
+        <result property="packetCode" column="packet_code"/>
+        <result property="batchCode" column="batch_code"/>
+        <result property="sterilizationDate" column="sterilization_date"/>
+        <result property="sterilizationCode" column="sterilization_code"/>
+        <result property="sterilizationEndDate" column="sterilization_end_date"/>
+        <result property="expdtEndDate" column="expdt_end_date"/>
+        <result property="unit" column="unit"/>
+        <result property="qty" column="qty"/>
+        <result property="packetQty" column="packet_qty"/>
+        <result property="goodsBatchId" column="goods_batch_id"/>
+        <result property="inPrice" column="in_price"/>
+        <result property="inTime" column="in_time"/>
+        <result property="goodsQty" column="goods_qty"/>
+    </resultMap>
+</mapper>

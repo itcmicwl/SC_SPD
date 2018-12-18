@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 引入接口，只要实现接口的方法就会调用对应接口方法的 select id -->
+<mapper namespace="gyqx.platform.sys.dao.mapper.ISysStringMapper"> 
+<!-- parameterType传入参数类型     resultMap=自己定义的一个返回类型     resultType返回类型 -->
+	<select id="getSysStringList"  resultType="gyqx.platform.po.SysString"  parameterType="gyqx.platform.po.SysString">
+		select * from sys_string t
+			<where>
+			<if test='remark != null and remark !=""'>  
+				and t.remark like CONCAT('%',#{remark},'%')  
+			</if> 
+			<if test='val != null and val !=""'>  
+				and t.val like CONCAT('%',#{val},'%')  
+			</if>
+		</where>
+	</select>
+	<select id="getSysStringAll"  resultType="gyqx.platform.po.SysString" >
+		select * from sys_string
+	</select>
+	
+	<select id="getSysStringVoList"  resultMap="sysStringVo"  parameterType="gyqx.platform.sys.vo.SysStringVo">
+		SELECT a.ename name,s.* from  sys_string s LEFT JOIN (
+		select v.val as val,v.ename as ename from sys_dict_value v join 
+		sys_dict d on v.dict_id=d.id where d.ename='ZFFL') a on s.kind=a.val
+			<where>
+			<if test='remark != null and remark !=""'>  
+				and s.remark like CONCAT('%',#{remark},'%')  
+			</if> 
+			<if test='val != null and val !=""'>  
+				and s.val like CONCAT('%',#{val},'%')  
+			</if> 
+		</where>
+	</select>
+	<resultMap type="gyqx.platform.sys.vo.SysStringVo" id="sysStringVo">
+	</resultMap>
+	
+	<!-- <resultMap type="gyqx.platform.sys.vo.SysStringVo" id="sysStringVo">
+		<id property="id" column="id"/>
+		<result property="dictId"  column="name"/>
+		<result property="ordinal"  column="code"/>
+	    <result property="ename"  column="ename"/>
+		<result property="val"  column="val"/>
+		<result property="extField"  column="ext_field"/>  
+		<result property="remark"  column="remark"/> 
+		<result property="uid"  column="uid"/>
+		<result property="mt"  column="mt"/>
+	    <result property="version"  column="version"/>
+	    <result property="dictCname"  column="dictCname"/>
+	</resultMap> -->
+	
+	<select id="getSysStringByid"  resultType="gyqx.platform.po.SysString">
+		select * from sys_string t 
+			<where>
+			t.id = #{id}
+		</where>
+	</select>
+	<select id="getSysConfigByName"  resultType="gyqx.platform.po.SysConfig">
+		select * from sys_config t 
+			<where>
+			t.ename = #{ename}
+		</where>
+	</select>
+	<select id="existSysString"  resultType="java.lang.Integer">
+		select count(*) from sys_string t 
+			<where>
+			<if test='id != null and id !=""'>  
+				and t.id  <![CDATA[=]]> #{id}
+			</if>
+		</where>
+	</select>
+	<insert id="insertSysString" parameterType="gyqx.platform.po.SysString">
+	  INSERT INTO sys_string VALUES (#{id}, #{ename}, #{val}, #{remark}, #{kind}, #{status}, #{uid},
+		<if test="_databaseId == 'oracle'">
+			sysdate,
+		</if>
+		<if test="_databaseId == 'mysql'">
+			sysdate(),
+		</if>
+		1)
+	</insert>	
+	<update id="setStatus" parameterType="gyqx.platform.po.SysString">
+		update sys_string t set
+		t.status = #{status},
+		t.mt = #{mt},
+		version = version+1	
+		where id=#{id} and version=#{version}
+	</update>
+	<update id="setSysString" parameterType="gyqx.platform.po.SysString">
+		update sys_string set
+		<if test='ename != null and ename !=""'>  
+				ename = #{ename} ,
+		</if> 
+		<if test='val != null and val !=""'>  
+				val = #{val} ,
+		</if> 
+		<if test='kind != null and kind !=""'>  
+				kind = #{kind}, 
+		</if>
+		<if test='uid != null and uid !=""'>  
+				uxid = #{uid},
+		</if>
+		<if test='remark != null and remark !=""'>  
+				remark = #{remark},
+		</if> 
+		<if test='status != null and status !=""'>  
+				status = #{status},
+		</if> 
+		version = version+1,
+		mt = #{mt}	
+		where id=#{id} and version=#{version}
+	</update>
+</mapper>

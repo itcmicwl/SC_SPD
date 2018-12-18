@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:camel="http://camel.apache.org/schema/spring"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+      	 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd  
+           http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+           http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+	<bean id="dataSourceClient" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">  
+	    <property name="driverClassName" value="${client.db.driverClassName}" />  
+	    <property name="url" value="${client.db.url}" />  
+	    <property name="username" value="${client.db.username}" />  
+	    <property name="password" value="${client.db.password}" />  
+	    
+	    <!-- 连接池启动时的初始值 -->
+	     <property name="initialSize" value="5"/>
+	     <!-- 连接池的最大值 -->
+	     <property name="maxTotal" value="200"/>
+	     <!-- 最大空闲值.当经过一个高峰时间后，连接池可以慢慢将已经用不到的连接慢慢释放一部分，一直减少到maxIdle为止 -->
+	     <property name="maxIdle" value="10"/>
+	     <!--    最小空闲值.当空闲的连接数少于阀值时，连接池就会预申请去一些连接，以免洪峰来时来不及申请 -->
+	     <property name="minIdle" value="10"/>
+	     <property name="validationQuery" value="SELECT 1"></property>
+		 <property name="testWhileIdle" value="true"></property>
+		 <property name="testOnBorrow" value="true"></property>
+		 <property name="timeBetweenEvictionRunsMillis" value="3600000"></property>
+<!-- 		 每次检测时，需要检测多少个数据连接，一般设置为与最大连接数一样，这样就可以检测完所有的连接 -->
+		 <property name="numTestsPerEvictionRun" value="50"></property>
+<!-- 		 一个数据库连接连接多少时间之外，我们认为其应该不再适用了(可能下一次就会失效了)，应该移除并重新建立连接了 -->
+		 <property name="minEvictableIdleTimeMillis" value="120000"></property>
+		 <property name="removeAbandonedOnBorrow" value="true"/>
+		 <property name="removeAbandonedOnMaintenance" value="true"/>
+		 <property name="removeAbandonedTimeout" value="6000000"/>	     
+	</bean> 
+	
+    <bean id="txClient" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">    
+        <property name="dataSource" ref="dataSourceClient"/>  
+    </bean>  
+    
+    
+</beans>

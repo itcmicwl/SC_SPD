@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:c="http://camel.apache.org/schema/spring"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+      	 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd  
+           http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+           http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+
+	<context:property-placeholder location="classpath*:txpConfig/*.properties" />
+	
+	<import resource="txp-dbconfig.xml"/>
+<!-- 	<import resource="txp-jms.xml"/> -->
+	<import resource="txp-ssl-jms.xml"/>
+	<import resource="txp-taskconfig.xml"/>
+	<import resource="txp-errorhanders.xml"/>
+	<import resource="txp-beans.xml"/>
+	<import resource="txp-runtime-beans.xml"/>
+    
+    <c:camelContext >    	
+    	<c:route id="downloadResponseFromCenter" errorHandlerRef="networkDeadLetterErrorHandler"> 
+    		<c:from uri="activemqCenter:queue:hosp-group01_company-013?requestTimeout=100000&amp;acknowledgementModeName=CLIENT_ACKNOWLEDGE" />
+    		<c:bean beanType="gyqx.txp.runtime.processor.CheckpointProcessor" ></c:bean>
+    		<c:transform>
+	    		<c:groovy>
+	    		headers.CamelFileName = headers.CamelFileNameOnly ; 
+	    		body
+	    		</c:groovy>
+    		</c:transform>
+    		<c:to uri="file://target/txpfiles/from-center/in" />
+    		<c:log message="downloadResponseFromCenter ${header.CamelFileNameOnly} end " />
+    	</c:route>    	
+    	<c:route id="downloadNotifyFromCenter" > 
+    		<c:from uri="activemqCenter:topic:hosp-group01?requestTimeout=100000&amp;acknowledgementModeName=CLIENT_ACKNOWLEDGE&amp;clientId=hosp001&amp;durableSubscriptionName=hosp001" />
+     		<c:to uri="file://target/txpfiles/from-center/notify-in" /> 
+    		<c:log message="downloadNotifyFromCenter : ${header.CamelFileName} end " />
+    	</c:route>    	
+    	
+    </c:camelContext>
+</beans>

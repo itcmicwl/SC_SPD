@@ -1,0 +1,37 @@
+
+ [
+ 	name:'生产厂商信息同步',
+ 		tableConfigs:[
+ 			[
+ 				tableName:'bas_mfrs_info',
+ 				pkNames:'id',
+ 				compareFieldNames:'id,version',
+ 				compareExpression:'left.id == right.id && left.version == right.version',
+ 				loadCompareDataExpression: " 'select id,version from bas_mfrs_info' " ,	
+ 				onFinishExpression:'',
+ 				
+ 				updateExpression:
+ 					'''def sql='update bas_mfrs_info set mfrs_kind=:mfrs_kind,mfrs_name=:mfrs_name,agent_name=:agent_name,reg_code=:reg_code,jyxk_code=:jyxk_code,nsrsb_code=:nsrsb_code,product_code=:product_code,remark=:remark,is_three_in_one=:is_three_in_one,master_code=:master_code,flag=:flag,uxid=:uxid,fill_date=:fill_date,last_update_datetime=:last_update_datetime,version=:version where id=:id ';
+ 					rows.each{ db.update(sql,it)} ''',
+ 				insertExpression:
+					'''def sql='insert into bas_mfrs_info (id,mfrs_kind,mfrs_name,agent_name,reg_code,jyxk_code,nsrsb_code,product_code,remark,is_three_in_one,master_code,flag,uxid,fill_date,last_update_datetime,version) values(:id,:mfrs_kind,:mfrs_name,:agent_name,:reg_code,:jyxk_code,:nsrsb_code,:product_code,:remark,:is_three_in_one,:master_code,:flag,:uxid,:fill_date,:last_update_datetime,:version)';
+ 					rows.each{ db.update(sql,it)} ''',
+ 				deleteExpression:
+ 					'''def sql = 'delete from bas_mfrs_info where id=:id';
+ 					rows.each{ db.update(sql,it)} ''', 				
+ 			],
+ 			[
+ 				tableName:'bas_mfrs_certificate',
+ 				pkNames:'id',
+ 				compareFieldNames:'id,version',
+ 			],
+ 			[
+ 				tableName:'bas_mfrs_certificate_image',
+ 				pkNames:'id',
+ 				compareFieldNames:'id,version'		 				 				
+
+ 			]],
+ 		relations:[],
+ 		idempotentExpression:"(new Date()).format('yyyyMMdd_HHmmss_SSS')"
+ ]
+	 	

@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="gyqx.spdhdi.orderMgr.dao.mapper.IReturnconfirmListMapper"> 
+<!-- parameterType传入参数类型     resultMap=自己定义的一个返回类型     resultType返回类型 -->
+	<select id="list"  resultMap="returnconfirmListMap" parameterType="gyqx.spdhdi.po.ReturnconfirmList">
+		<![CDATA[
+		select id,pid,bill_id,row_number,return_bill_id,return_bill_rownum,return_bill_date,pur_bill_id,apply_bill_id,prov_goods_id,goods_gg,goods_mrfs_id,made,hos_goods_id,hos_goods_code,hos_goods_name,prov_goods_erp_code,prov_goods_erp_name,batch_num,batch_code,sterilization_code,expdt_end_date,product_date,return_unit,return_scale,return_price,return_qty,send_unit,send_qty,send_price,out_kind,sum_rows,source_data,return_reason,version from returnconfirm_list
+		]]>
+		<where>
+			and id = #{id}
+		</where>
+	</select>
+	<select id="listVo"  resultMap="returnconfirmListVoMap" parameterType="gyqx.spdhdi.orderMgr.vo.ReturnconfirmListVo">
+		select r.id,r.pid,r.bill_id,r.row_number,r.return_bill_id,r.return_bill_rownum,r.return_bill_date,r.pur_bill_id,
+			r.apply_bill_id,r.prov_goods_id,r.goods_gg,r.goods_mrfs_id,r.made,r.hos_goods_id,r.hos_goods_code,
+			r.hos_goods_name,r.prov_goods_erp_code,r.prov_goods_erp_name,
+			r.batch_num,r.batch_code,r.sterilization_code,r.expdt_end_date,r.product_date,r.return_unit,r.return_scale,
+			r.return_price,r.return_qty,r.send_unit,r.send_qty,r.send_price,r.out_kind,r.sum_rows,r.source_data,r.return_reason,r.version,
+			m.mfrs_name as  mfrsName
+		 from returnconfirm_list r
+		  left join bas_mfrs_info m on m.id= r.goods_mrfs_id
+		<where>
+		      <if test='id != null'>  and id = #{id} </if>
+		      <if test='pid !=null'>  and pid =#{pid}</if>
+		</where>
+	</select>
+	<resultMap type="gyqx.spdhdi.orderMgr.vo.ReturnconfirmListVo" id="returnconfirmListVoMap" extends="returnconfirmListMap">	
+			<result property="mfrsName"  column="mfrsName"/>	
+	</resultMap>
+ 	<resultMap type="gyqx.spdhdi.po.ReturnconfirmList" id="returnconfirmListMap">
+		<id property="id" column="id"/>
+		<result property="pid"  column="pid"/>
+		<result property="billId"  column="bill_id"/>
+		<result property="rowNumber"  column="row_number"/>
+		<result property="returnBillId"  column="return_bill_id"/>
+		<result property="returnBillRownum"  column="return_bill_rownum"/>
+		<result property="returnBillDate"  column="return_bill_date"/>
+		<result property="purBillId"  column="pur_bill_id"/>
+		<result property="applyBillId"  column="apply_bill_id"/>
+		<result property="provGoodsId"  column="prov_goods_id"/>
+		<result property="goodsGg"  column="goods_gg"/>
+		<result property="goodsMrfsId"  column="goods_mrfs_id"/>
+		<result property="made"  column="made"/>
+		<result property="hosGoodsId"  column="hos_goods_id"/>
+		<result property="hosGoodsCode"  column="hos_goods_code"/>
+		<result property="hosGoodsName"  column="hos_goods_name"/>
+		<result property="provGoodsErpCode"  column="prov_goods_erp_code"/>
+		<result property="provGoodsErpName"  column="prov_goods_erp_name"/>
+		<result property="batchNum"  column="batch_num"/>
+		<result property="batchCode"  column="batch_code"/>
+		<result property="sterilizationCode"  column="sterilization_code"/>
+		<result property="expdtEndDate"  column="expdt_end_date"/>
+		<result property="productDate"  column="product_date"/>
+		<result property="returnUnit"  column="return_unit"/>
+		<result property="returnScale"  column="return_scale"/>
+		<result property="returnPrice"  column="return_price"/>
+		<result property="returnQty"  column="return_qty"/>
+		<result property="sendUnit"  column="send_unit"/>
+		<result property="sendQty"  column="send_qty"/>
+		<result property="sendPrice"  column="send_price"/>
+		<result property="outKind"  column="out_kind"/>
+		<result property="sumRows"  column="sum_rows"/>
+		<result property="sourceData"  column="source_data"/>
+		<result property="returnReason"  column="return_reason"/>
+		<result property="version"  column="version"/>
+	</resultMap> 
+	
+	<update id="update" parameterType="gyqx.spdhdi.po.ReturnconfirmList" >
+		update returnconfirm_list
+		<set>
+			<if test='pid != null'>  
+				pid = #{pid},
+			</if> 
+			<if test='billId != null'>  
+				bill_id = #{billId},
+			</if> 
+			<if test='rowNumber != null'>  
+				row_number = #{rowNumber},
+			</if> 
+			<if test='returnBillId != null'>  
+				return_bill_id = #{returnBillId},
+			</if> 
+			<if test='returnBillRownum != null'>  
+				return_bill_rownum = #{returnBillRownum},
+			</if> 
+			<if test='returnBillDate != null'>  
+				return_bill_date = #{returnBillDate},
+			</if> 
+			<if test='purBillId != null'>  
+				pur_bill_id = #{purBillId},
+			</if> 
+			<if test='applyBillId != null'>  
+				apply_bill_id = #{applyBillId},
+			</if> 
+			<if test='provGoodsId != null'>  
+				prov_goods_id = #{provGoodsId},
+			</if> 
+			<if test='goodsGg != null'>  
+				goods_gg = #{goodsGg},
+			</if> 
+			<if test='goodsMrfsId != null'>  
+				goods_mrfs_id = #{goodsMrfsId},
+			</if> 
+			<if test='made != null'>  
+				made = #{made},
+			</if> 
+			<if test='hosGoodsId != null'>  
+				hos_goods_id = #{hosGoodsId},
+			</if> 
+			<if test='hosGoodsCode != null'>  
+				hos_goods_code = #{hosGoodsCode},
+			</if> 
+			<if test='hosGoodsName != null'>  
+				hos_goods_name = #{hosGoodsName},
+			</if> 
+			<if test='provGoodsErpCode != null'>  
+				prov_goods_erp_code = #{provGoodsErpCode},
+			</if> 
+			<if test='provGoodsErpName != null'>  
+				prov_goods_erp_name = #{provGoodsErpName},
+			</if> 
+			<if test='batchNum != null'>  
+				batch_num = #{batchNum},
+			</if> 
+			<if test='batchCode != null'>  
+				batch_code = #{batchCode},
+			</if> 
+			<if test='sterilizationCode != null'>  
+				sterilization_code = #{sterilizationCode},
+			</if> 
+			<if test='expdtEndDate != null'>  
+				expdt_end_date = #{expdtEndDate},
+			</if> 
+			<if test='productDate != null'>  
+				product_date = #{productDate},
+			</if> 
+			<if test='returnUnit != null'>  
+				return_unit = #{returnUnit},
+			</if> 
+			<if test='returnScale != null'>  
+				return_scale = #{returnScale},
+			</if> 
+			<if test='returnPrice != null'>  
+				return_price = #{returnPrice},
+			</if> 
+			<if test='returnQty != null'>  
+				return_qty = #{returnQty},
+			</if> 
+			<if test='sendUnit != null'>  
+				send_unit = #{sendUnit},
+			</if> 
+			<if test='sendQty != null'>  
+				send_qty = #{sendQty},
+			</if> 
+			<if test='sendPrice != null'>  
+				send_price = #{sendPrice},
+			</if> 
+			<if test='outKind != null'>  
+				out_kind = #{outKind},
+			</if> 
+			<if test='sumRows != null'>  
+				sum_rows = #{sumRows},
+			</if> 
+			<if test='sourceData != null'>  
+				source_data = #{sourceData},
+			</if> 
+			<if test='returnReason != null'>  
+				return_reason = #{returnReason},
+			</if>
+			<if test="_databaseId == 'mysql'">
+				last_update_datetime = sysdate(),
+			</if>
+			<if test="_databaseId == 'oracle'">
+				last_update_datetime = sysdate,
+			</if>
+			version=version+1,
+		</set>
+		<where>
+			and id = #{id}
+			and version= #{version}
+		</where>
+	</update>
+	
+	<insert id="insert" parameterType="gyqx.spdhdi.po.ReturnconfirmList" >
+		insert into returnconfirm_list 
+		( id , pid , bill_id , row_number , return_bill_id , return_bill_rownum , return_bill_date , pur_bill_id , apply_bill_id , prov_goods_id , goods_gg , goods_mrfs_id , made , hos_goods_id , hos_goods_code , hos_goods_name , prov_goods_erp_code , prov_goods_erp_name , batch_num , batch_code , sterilization_code , expdt_end_date , product_date , return_unit , return_scale , return_price , return_qty , send_unit , send_qty , send_price , out_kind , sum_rows , source_data , return_reason , version, last_update_datetime )
+		values (#{id},#{pid},#{billId},#{rowNumber},#{returnBillId},#{returnBillRownum},#{returnBillDate},#{purBillId},#{applyBillId},#{provGoodsId},#{goodsGg},#{goodsMrfsId},#{made},#{hosGoodsId},#{hosGoodsCode},#{hosGoodsName},#{provGoodsErpCode},#{provGoodsErpName},#{batchNum},#{batchCode},#{sterilizationCode},#{expdtEndDate},#{productDate},#{returnUnit},#{returnScale},#{returnPrice},#{returnQty},#{sendUnit},#{sendQty},#{sendPrice},#{outKind},#{sumRows},#{sourceData},#{returnReason},#{version},
+		<if test="_databaseId == 'mysql'">
+			sysdate()
+		</if>
+		<if test="_databaseId == 'oracle'">
+			sysdate
+		</if>
+		)
+	</insert>
+</mapper>

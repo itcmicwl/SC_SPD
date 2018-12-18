@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="gyqx.spdherp.stockout.dao.mapper.ManualOutMapper" >
+
+    <select id="listStockGoods" resultMap="gyqx.spdherp.stockout.dao.mapper.TransferOutMapper.StockpileHzVoResultMap">
+        SELECT <include refid="gyqx.spdherp.stockout.dao.mapper.TransferOutMapper.StockpileHzVo_Column_List"><property name="view" value="vs"/></include>, goods.unique_code_strategy AS is_unique, goods.made, prov.code AS prov_code
+        FROM v_stockpile_hz vs
+        INNER JOIN hos_goods_info goods ON ( goods.hos_id = vs.hos_id AND goods.id = vs.hos_goods_id )
+        LEFT OUTER JOIN bas_company_info prov ON (prov.id = vs.prov_id)
+        WHERE
+        vs.hos_id = #{hosId} AND vs.stoc_id = #{stockId} AND vs.stoc_kind = #{stocKind} AND vs.qty > 0
+        ORDER BY vs.goods_name
+    </select>
+</mapper>

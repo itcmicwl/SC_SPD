@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="gyqx.spdhdi.settleCenter.dao.mapper.IHosOutBalanceMapper">
+    <sql id="baseSelect">
+        select b.id,b.bill_id,b.spd_code,b.hos_id,b.hos_name,b.hos_erp_code,b.prov_id,b.prov_name,b.prov_erp_code,b.prov_dept_erp_code,
+		b.filler,b.fill_date,b.remark,b.sum_row,b.status,b.version,u.ename as fillterName,b.invoice_number,b.invoice_code,b.last_update_datetime,
+		b.sale_man,o.ename,b.settle_type
+		from hos_out_balance b left join sys_user_org u on b.filler = u.user_id
+		left join sys_org o on o.corp_id = b.prov_id and o.erp_code = b.prov_dept_erp_code
+    </sql>
+	<select id="list"  resultMap="hosOutBalanceMap" parameterType="gyqx.spdhdi.settleCenter.vo.HosOutBalanceVo">
+    	<include refid="baseSelect"></include>
+		<where>
+			<if test='billId != null and billId !=""'>b.bill_id= #{billId}</if>
+			<if test='hosId != null'>and b.hos_id= #{hosId}</if>
+			<if test='provId != null'>and b.prov_id= #{provId}</if>
+			<if test='status != null'>and b.status= #{status}</if>
+			<if test="startDate != null and endDate != null">
+				 and b.fill_date BETWEEN #{startDate} AND #{endDate}
+			</if>
+		</where>
+		ORDER BY  b.fill_date DESC
+	</select>
+	<select id="getById"  resultMap="hosOutBalanceMap" parameterType="gyqx.spdhdi.settleCenter.vo.HosOutBalanceVo">
+		<include refid="baseSelect"></include>
+		<where>
+			and b.id = #{id}
+		</where>
+	</select>
+    <select id="getByBillId"  resultMap="hosOutBalanceMap" parameterType="gyqx.spdhdi.settleCenter.vo.HosOutBalanceVo">
+        <include refid="baseSelect"></include>
+        <where>
+            and b.bill_id = #{billId}
+        </where>
+    </select>
+ 	<resultMap type="gyqx.spdhdi.settleCenter.vo.HosOutBalanceVo" id="hosOutBalanceMap">
+		<id property="id" column="id"/>
+		<result property="billId"  column="bill_id"/>
+		<result property="spdCode"  column="spd_code"/>
+		<result property="hosId"  column="hos_id"/>
+		<result property="hosName"  column="hos_name"/>
+		<result property="hosErpCode"  column="hos_erp_code"/>
+		<result property="provId"  column="prov_id"/>
+		<result property="provName"  column="prov_name"/>
+		<result property="provErpCode"  column="prov_erp_code"/>
+		<result property="provDeptErpCode"  column="prov_dept_erp_code"/>
+		<result property="provDeptErpName"  column="ename"/>
+		<result property="filler"  column="filler"/>
+		<result property="remark"  column="remark"/>
+		<result property="sumRow"  column="sum_row"/>
+        <result property="status"  column="status"/>
+        <result property="fillDate"  column="fill_date"/>
+		<result property="version"  column="version"/>
+		<result property="saleMan"  column="sale_man"/>
+		<result property="invoiceNumber"  column="invoice_number"/>
+		<result property="invoiceCode"  column="invoice_code"/>
+		<result property="settleType"  column="settle_type"/>
+		
+		<result property="lastUpdateDatetime"  column="last_update_datetime"/>
+		<collection property="lstDetail" ofType="hosOutBalanceDetailMap" select="subList" column="{pid=id}"/>
+	</resultMap>
+	<sql id="baseSubSelect">
+		SELECT bd.id, bd.pid, bd.bill_id, bd.row_num, bd.prov_id, bd.prov_name, bd.prov_erp_code, bd.out_dept_id, bd.out_dept_name, bd.out_dept_erp_code, 
+			bd.out_billid, bd.out_row_num, bd.out_date, bd.hos_goods_id, bd.hos_goods_name, bd.goods_gg, bd.mfrs_id, bm.mfrs_name,
+			bd.made, bd.packet_code, bd.prov_goods_id, bd.prov_goods_name, bd.batch_id, bd.batch_code, 
+			bd.sterilization_code, bd.sterilization_date, bd.sterilization_end_date, bd.expdt_end_date, bd.produce_datetime, 
+			bd.hos_unit, bd.hos_unit_qty, bd.prov_unit, bd.hos_scale, bd.prov_unit_qty, bd.status, 
+			bd.sub_prov_id,bd.sub_prov_erp_code,bd.sub_prov_name,bd.goods_erp_code ,bd.settle_qty ,
+			bd.purchase_price,bd.price,bd.receive_date,bd.delivery_date,bd.send_temprature,bd.receive_temprature,bd.transport_type,
+			bd.out_kind, bd.version, bd.invoice_number, bd.invoice_code, bd.sale_man, bd.last_update_datetime 
+		FROM hos_out_balance_detail bd LEFT JOIN bas_mfrs_info bm ON bm.id = bd.mfrs_id
+	</sql>
+	<resultMap type="gyqx.spdhdi.settleCenter.vo.HosOutBalanceDetailVo" id="hosOutBalanceDetailMap">
+		<id property="id" column="id"/>
+		<result property="pid"  column="pid"/>
+		<result property="billId"  column="bill_id"/>
+		<result property="rowNum"  column="row_num"/>
+		<result property="provId"  column="prov_id"/>
+		<result property="provName"  column="prov_name"/>
+		<result property="provErpCode"  column="prov_erp_code"/>
+		<result property="outDeptId"  column="out_dept_id"/>
+		<result property="outDeptName"  column="out_dept_name"/>
+		<result property="outDeptErpCode"  column="out_dept_erp_code"/>
+		<result property="outBillid"  column="out_billid"/>
+		<result property="outRowNum"  column="out_row_num"/>
+		<result property="outDate"  column="out_date"/>
+		<result property="hosGoodsId"  column="hos_goods_id"/>
+		<result property="hosGoodsName"  column="hos_goods_name"/>
+		<result property="goodsGg"  column="goods_gg"/>
+		<result property="mfrsId"  column="mfrs_id"/>
+		<result property="mfrsName"  column="mfrs_name"/>
+		<result property="made"  column="made"/>
+		<result property="packetCode"  column="packet_code"/>
+		<result property="provGoodsId"  column="prov_goods_id"/>
+		<result property="provGoodsName"  column="prov_goods_name"/>
+		<result property="batchId"  column="batch_id"/>
+		<result property="batchCode"  column="batch_code"/>
+		<result property="sterilizationCode"  column="sterilization_code"/>
+		<result property="sterilizationDate"  column="sterilization_date"/>
+		<result property="sterilizationEndDate"  column="sterilization_end_date"/>
+		<result property="expdtEndDate"  column="expdt_end_date"/>
+		<result property="produceDatetime"  column="produce_datetime"/>
+		<result property="hosUnit"  column="hos_unit"/>
+		<result property="hosUnitQty"  column="hos_unit_qty"/>
+		<result property="provUnit"  column="prov_unit"/>
+		<result property="hosScale"  column="hos_scale"/>
+		<result property="provUnitQty"  column="prov_unit_qty"/>
+		<result property="status" column="status"/>
+		<result property="outKind"  column="out_kind"/>
+		<result property="version"  column="version"/>
+		<result property="saleMan"  column="sale_man"/>
+		<result property="invoiceNumber"  column="invoice_number"/>
+		<result property="invoiceCode"  column="invoice_code"/>
+		<result property="saleMan"  column="sale_man"/>
+		<result property="lastUpdateDatetime"  column="last_update_datetime"/>
+		<result property="subProvId"  column="sub_prov_id"/>
+		<result property="subProvName"  column="sub_prov_name"/>
+		<result property="subProvErpCode"  column="sub_prov_erp_code"/>
+		
+		
+		<result property="purchasePrice"  column="purchase_price"/>
+		<result property="price"  column="price"/>
+		<result property="receiveDate"  column="receive_date"/>
+		<result property="deliveryDate"  column="delivery_date"/>
+		<result property="sendTemprature"  column="send_temprature"/>
+		<result property="receiveTemprature"  column="receive_temprature"/>
+		<result property="transportType"  column="transport_type"/>
+		<result property="settleQty"  column="settle_qty"/>
+		<result property="goodsErpCode"  column="goods_erp_code"/>
+			
+	</resultMap>
+	<select id="subList"  resultMap="hosOutBalanceDetailMap" parameterType="gyqx.spdhdi.settleCenter.vo.HosOutBalanceDetailVo">
+		<include refid="baseSubSelect"></include>
+		<where>
+			<if test='pid != null'>
+				and pid = #{pid}
+				order by row_num
+			</if>
+		</where>
+	</select>
+
+	<update id="update" parameterType="gyqx.spdhdi.settleCenter.vo.HosOutBalanceVo" >
+		update hos_out_balance
+		<set>
+			<if test='billId != null'>bill_id = #{billId},</if>
+			<if test='spdCode != null'>spd_code = #{spdCode},</if>
+			<if test='hosId != null'>hos_id = #{hosId},</if>
+			<if test='hosName != null'>hos_name = #{hosName},</if>
+			<if test='hosErpCode != null'>hos_erp_code = #{hosErpCode},</if>
+			<if test='provId != null'>prov_id = #{provId},</if>
+			<if test='provName != null'>prov_name = #{provName},</if>
+			<if test='provErpCode != null'>prov_erp_code = #{provErpCode},</if>
+			<if test='provDeptErpCode != null'>prov_dept_erp_code = #{provDeptErpCode},</if>
+			<if test='filler != null'>filler = #{filler},</if>
+			<if test='remark != null'>remark = #{remark},</if>
+			<if test='sumRow != null'>sum_row = #{sumRow},</if>
+			<if test='status != null'>status = #{status},</if>
+			<if test='invoiceNumber != null'>invoice_number = #{invoiceNumber},</if>
+			<if test='invoiceCode != null'>invoice_code = #{invoiceCode},</if>
+            <if test='fillDate != null'>fill_date = #{fillDate},</if>
+			version=version+1,
+			<if test="_databaseId == 'mysql'">
+				last_update_datetime = sysdate(),
+			</if>
+			<if test="_databaseId == 'oracle'">
+				last_update_datetime = sysdate,
+			</if>
+		</set>
+		<where>
+			and id = #{id}
+			and version= #{version}
+		</where>
+	</update>
+	
+	<insert id="insert" parameterType="gyqx.spdhdi.settleCenter.vo.HosOutBalanceVo" >
+		insert into hos_out_balance 
+		( id , bill_id , spd_code , hos_id , hos_name , hos_erp_code , prov_id , prov_name , prov_erp_code ,
+		prov_dept_erp_code , filler,fill_date , remark , sum_row ,status, version,invoice_number,invoice_code,last_update_datetime  )
+		values
+		(#{id},#{billId},#{spdCode},#{hosId},#{hosName},#{hosErpCode},#{provId},#{provName},#{provErpCode},
+		#{provDeptErpCode},#{filler},#{fillDate},#{remark},#{sumRow},#{status},1,#{invoiceNumber},#{invoiceCode},sysdate())
+	</insert>
+	<delete id="delById" parameterType="java.lang.String">
+		DELETE FROM
+		hos_out_balance
+		WHERE id=#{id}
+	</delete>
+	
+	<!-- 上传JDE -->
+	<select id="getAllBillSubmit" resultMap="hosOutBalanceMap">
+		SELECT
+			b.id,
+			b.bill_id,
+			b.spd_code,
+			b.hos_id,
+			b.hos_name,
+			b.hos_erp_code,
+			b.prov_id,
+			b.prov_name,
+			b.prov_erp_code,
+			b.prov_dept_erp_code,
+			b.filler,
+			b.fill_date,
+			b.remark,
+			b.sum_row,
+			b.status,
+			b.version,
+			u.ename AS fillterName,
+			b.sale_man,
+			b.invoice_number,
+			b.invoice_code,
+			b.last_update_datetime
+		FROM
+			hos_out_balance b
+		LEFT JOIN sys_user_org u ON b.filler = u.user_id
+		WHERE
+			b.status = 20
+		AND b.prov_id IN (
+			SELECT
+				pc.prov_id
+			FROM
+				prov_org_inner_code pc
+		)
+	</select>
+</mapper>

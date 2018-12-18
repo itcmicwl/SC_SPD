@@ -1,0 +1,9 @@
+
+ [
+ 		name:'生产厂商图片信息同步',
+ 		catalog:'FileDownloadRequest',
+ 		beginTransferDataExpression:'''\
+ 			def rows =db.queryList('select id, from bas_mfrs_certificate_image');
+ 		''',
+ 		endTransferDataExpression:''
+ ]

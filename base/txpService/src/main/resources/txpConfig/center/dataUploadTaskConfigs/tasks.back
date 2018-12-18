@@ -1,0 +1,20 @@
+
+ [
+	name:'生产厂商信息上传',
+	tableConfigs:[
+		[
+			tableName:'bas_mfrs_info',
+			pkNames:'id',
+			compareFieldNames:'id,version',
+			loadDataExpression: " 'select * from bas_mfrs_info where last_update_datetime > :lastUpdateDatetime' " 
+		],
+		[
+			tableName:'bas_mfrs_certificate',
+			parentTableName:'bas_mfrs_info'
+		],
+		[
+			tableName:'bas_mfrs_certificate_image',	
+			parentTableName:'bas_mfrs_info'
+		]]
+ ]
+	 	

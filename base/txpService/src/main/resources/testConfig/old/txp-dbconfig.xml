@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:camel="http://camel.apache.org/schema/spring"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+      	 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd  
+           http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+           http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+	<bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">  
+	    <property name="driverClassName" value="${mysql.driverClassName}" />  
+	    <property name="url" value="${jdbc.url}" />  
+	    <property name="username" value="${jdbc.username}" />  
+	    <property name="password" value="${jdbc.password}" />  
+	    
+	    <!-- 连接池启动时的初始值 -->
+	     <property name="initialSize" value="5"/>
+	     <!-- 连接池的最大值 -->
+	     <property name="maxTotal" value="200"/>
+	     <!-- 最大空闲值.当经过一个高峰时间后，连接池可以慢慢将已经用不到的连接慢慢释放一部分，一直减少到maxIdle为止 -->
+	     <property name="maxIdle" value="10"/>
+	     <!--    最小空闲值.当空闲的连接数少于阀值时，连接池就会预申请去一些连接，以免洪峰来时来不及申请 -->
+	     <property name="minIdle" value="10"/>
+	     <property name="validationQuery" value="SELECT 1"></property>
+		 <property name="testWhileIdle" value="true"></property>
+		 <property name="testOnBorrow" value="true"></property>
+		 <property name="timeBetweenEvictionRunsMillis" value="3600000"></property>
+<!-- 		 每次检测时，需要检测多少个数据连接，一般设置为与最大连接数一样，这样就可以检测完所有的连接 -->
+		 <property name="numTestsPerEvictionRun" value="50"></property>
+<!-- 		 一个数据库连接连接多少时间之外，我们认为其应该不再适用了(可能下一次就会失效了)，应该移除并重新建立连接了 -->
+		 <property name="minEvictableIdleTimeMillis" value="120000"></property>
+		 <property name="removeAbandonedOnBorrow" value="true"/>
+		 <property name="removeAbandonedOnMaintenance" value="true"/>
+		 <property name="removeAbandonedTimeout" value="6000000"/>	     
+	</bean> 
+    
+    <bean id="dataSource1" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">  
+	    <property name="driverClassName" value="${mysql.driverClassName}" />  
+	    <property name="url" value="${jdbc.url1}" />  
+	    <property name="username" value="${jdbc.username}" />  
+	    <property name="password" value="${jdbc.password}" />  
+	    
+	    <!-- 连接池启动时的初始值 -->
+	     <property name="initialSize" value="5"/>
+	     <!-- 连接池的最大值 -->
+
+	     <property name="validationQuery" value="SELECT 1"></property>
+		 <property name="testWhileIdle" value="true"></property>
+		 <property name="testOnBorrow" value="true"></property>
+		 <property name="timeBetweenEvictionRunsMillis" value="3600000"></property>
+<!-- 		 每次检测时，需要检测多少个数据连接，一般设置为与最大连接数一样，这样就可以检测完所有的连接 -->
+		 <property name="numTestsPerEvictionRun" value="50"></property>
+<!-- 		 一个数据库连接连接多少时间之外，我们认为其应该不再适用了(可能下一次就会失效了)，应该移除并重新建立连接了 -->
+		 <property name="minEvictableIdleTimeMillis" value="120000"></property>
+		 <property name="removeAbandonedOnBorrow" value="true"/>
+		 <property name="removeAbandonedOnMaintenance" value="true"/>
+		 <property name="removeAbandonedTimeout" value="6000000"/>	     
+	</bean>    
+	
+	<bean id="oracleDataSource" class="oracle.jdbc.pool.OracleConnectionPoolDataSource" destroy-method="close">
+	    <property name="URL" value="${oracle.url}" />
+	    <property name="user" value="${oracle.username}" />
+	    <property name="password" value="${oracle.password}" />
+	    <property name="connectionCacheProperties">
+	        <props merge="default">
+	            <prop key="MinLimit">5</prop>
+	            <prop key="MaxLimit">50</prop>
+	        </props>
+	    </property>
+	</bean>
+	
+<!-- 	<bean id="messageIdRepository" class="org.apache.camel.processor.idempotent.jdbc.JdbcMessageIdRepository"> -->
+<!--     	<constructor-arg ref="dataSource" /> -->
+<!--     	<constructor-arg value="myProcessorName" /> -->
+<!--     	<property name="tableExistsString" value="SELECT 1 FROM CUSTOMIZED_MESSAGE_REPOSITORY WHERE 1 = 0" /> -->
+<!--     	<property name="createString" value="CREATE TABLE CUSTOMIZED_MESSAGE_REPOSITORY (processorName VARCHAR(255), messageId VARCHAR(100), createdAt TIMESTAMP)" /> -->
+<!--     	<property name="queryString" value="SELECT COUNT(*) FROM CUSTOMIZED_MESSAGE_REPOSITORY WHERE processorName = ? AND messageId = ?" /> -->
+<!--     	<property name="insertString" value="INSERT INTO CUSTOMIZED_MESSAGE_REPOSITORY (processorName, messageId, createdAt) VALUES (?, ?, ?)" /> -->
+<!--     	<property name="deleteString" value="DELETE FROM CUSTOMIZED_MESSAGE_REPOSITORY WHERE processorName = ? AND messageId = ?" /> -->
+<!--     </bean> -->
+    
+<!--     <bean id="messageIdRepository1" class="org.apache.camel.processor.idempotent.jdbc.JdbcMessageIdRepository"> -->
+<!--     	<constructor-arg ref="dataSource1" /> -->
+<!--     	<constructor-arg value="myProcessorName" /> -->
+<!--     	<property name="tableExistsString" value="SELECT 1 FROM CUSTOMIZED_MESSAGE_REPOSITORY WHERE 1 = 0" /> -->
+<!--     	<property name="createString" value="CREATE TABLE CUSTOMIZED_MESSAGE_REPOSITORY (processorName VARCHAR(255), messageId VARCHAR(100), createdAt TIMESTAMP)" /> -->
+<!--     	<property name="queryString" value="SELECT COUNT(*) FROM CUSTOMIZED_MESSAGE_REPOSITORY WHERE processorName = ? AND messageId = ?" /> -->
+<!--     	<property name="insertString" value="INSERT INTO CUSTOMIZED_MESSAGE_REPOSITORY (processorName, messageId, createdAt) VALUES (?, ?, ?)" /> -->
+<!--     	<property name="deleteString" value="DELETE FROM CUSTOMIZED_MESSAGE_REPOSITORY WHERE processorName = ? AND messageId = ?" /> -->
+<!--     </bean>     -->
+    
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">    
+        <property name="dataSource" ref="dataSource"/>  
+    </bean>  
+    <bean id="transactionManager1" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">    
+        <property name="dataSource" ref="dataSource1"/>  
+    </bean>  
+    <bean id="txOracle" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">    
+        <property name="dataSource" ref="oracleDataSource"/>  
+    </bean>  
+    
+    <bean id="config.dbsources" class="gyqx.txp.configuration.DbSources">
+    	<property name="dbSourceMap">
+    		<map>
+    			<entry key="center" value-ref="oracleDataSource" /> 
+    			<entry key="dataSource1" value-ref="dataSource1" /> 
+    			<entry key="localhost" value-ref="dataSource" /> 
+    		</map>
+    	</property>
+    	
+    	<property name="dbTypeMap">
+    		<map>
+    			<entry key="center" value="oracle" /> 
+    			<entry key="dataSource1" value="mysql" /> 
+    			<entry key="localhost" value="mysql" /> 
+    		</map>
+    	</property>
+    	
+    	<property name="transacationManagerMap">
+    		<map>
+    			<entry key="center" value-ref="txOracle" /> 
+    			<entry key="dataSource1" value-ref="transactionManager1" /> 
+    			<entry key="localhost" value-ref="transactionManager" /> 
+    		</map>
+    	</property>
+    </bean>
+</beans>

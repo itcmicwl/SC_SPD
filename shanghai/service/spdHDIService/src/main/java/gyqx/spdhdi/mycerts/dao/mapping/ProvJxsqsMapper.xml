@@ -1,0 +1,398 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="gyqx.spdhdi.mycerts.dao.mapper.ProvJxsqsMapper">
+    <resultMap id="ProvRegInfoJxsqsVoBaseResultMap" type="gyqx.spdhdi.mycerts.vo.ProvRegInfoJxsqsVo">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="product_name" property="productName" jdbcType="VARCHAR"/>
+        <result column="certificate_code" property="certificateCode" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <resultMap id="BasCompanyInfoJxsqsVoBaseResultMap" type="gyqx.spdhdi.mycerts.vo.BasCompanyInfoJxsqsVo">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="cname" property="hosName" jdbcType="VARCHAR"/>
+    </resultMap>
+    <insert id="insertProvJxsqsHost" parameterType="java.util.List" databaseId="mysql">
+        INSERT prov_jxsqs_hos (id, sqs_id, prov_id, hos_id, uxid, fill_date, last_update_datetime, version)
+        VALUES
+        <foreach collection="hosList" item="item" index="index" open="(" separator="),(" close=")">
+            #{item.id}, #{item.sqsId}, #{item.provId}, #{item.hosId}, #{item.uid}, #{item.fillDate},
+            #{item.lastUpdateDatetime}, #{item.version}
+        </foreach>
+    </insert>
+    <insert id="insertProvJxsqsHost" parameterType="java.util.List" databaseId="oracle">
+        INSERT INTO prov_jxsqs_hos (id, sqs_id, prov_id, hos_id, uxid, fill_date, last_update_datetime, version)
+        <foreach collection="hosList" item="item" index="index" separator="union all">
+            select #{item.id}, #{item.sqsId}, #{item.provId}, #{item.hosId}, #{item.uid}, #{item.fillDate},
+            #{item.lastUpdateDatetime}, #{item.version} from dual
+        </foreach>
+    </insert>
+    <insert id="insertProvJxsqsRegist" parameterType="java.util.List" databaseId="mysql">
+        INSERT prov_jxsqs_regist (id, sqs_id, prov_id, mfrs_id, certificate_id, uxid, fill_date, last_update_datetime,
+        version)
+        VALUES
+        <foreach collection="regists" item="item" index="index" open="(" separator="),(" close=")">
+            #{item.id}, #{item.sqsId}, #{item.provId}, #{item.mfrsId}, #{item.certificateId}, #{item.uid},
+            #{item.fillDate},
+            #{item.lastUpdateDatetime}, #{item.version}
+        </foreach>
+    </insert>
+    <insert id="insertProvJxsqsRegist" parameterType="java.util.List" databaseId="oracle">
+        INSERT INTO prov_jxsqs_regist (id, sqs_id, prov_id, mfrs_id, certificate_id, uxid, fill_date, last_update_datetime,
+        version)
+        <foreach collection="regists" item="item" index="index" separator="union all">
+            select #{item.id}, #{item.sqsId}, #{item.provId}, #{item.mfrsId}, #{item.certificateId}, #{item.uid},
+            #{item.fillDate},
+            #{item.lastUpdateDatetime}, #{item.version} from dual
+        </foreach>
+    </insert>
+    <insert id="insertProvJxsqsZjzj" databaseId="mysql">
+        INSERT prov_jxsqs_zjzj (id, p_id, p_name, file_path, version)
+        VALUES
+        <foreach collection="zjzjList" item="item" index="index" open="(" separator="),(" close=")">
+            #{item.id}, #{item.pId}, #{item.pName}, #{item.filePath}, #{item.version}
+        </foreach>
+    </insert>
+    <insert id="insertProvJxsqsZjzj" databaseId="oracle">
+        INSERT INTO prov_jxsqs_zjzj (id, p_id, p_name, file_path, version)
+        <foreach collection="zjzjList" item="item" index="index" separator="union all">
+            select #{item.id}, #{item.pId}, #{item.pName}, #{item.filePath}, #{item.version} from dual
+        </foreach>
+    </insert>
+
+    <delete id="delProvJxsqsHos">
+        delete from prov_jxsqs_hos
+        where sqs_id = #{sqsId}
+        and prov_id = #{provId}
+        and hos_id in
+        <foreach collection="delHos" item="item" open="(" separator="," close=")">
+            #{item.id}
+        </foreach>
+    </delete>
+
+    <delete id="delProvJxsqsRegist">
+        delete from prov_jxsqs_regist
+        where sqs_id = #{sqsId}
+        and prov_id = #{provId}
+        and mfrs_id = #{mfrsId}
+        and certificate_id in
+        <foreach collection="delCerts" item="item" open="(" separator="," close=")">
+            #{item.id}
+        </foreach>
+    </delete>
+    <delete id="delProvJxsqsHosBySqsId">
+        DELETE FROM prov_jxsqs_hos
+        WHERE sqs_id = #{id}
+    </delete>
+    <delete id="delProvJxsqsRegistBySqsId">
+        DELETE FROM prov_jxsqs_regist
+        WHERE sqs_id = #{id}
+    </delete>
+    <delete id="delProvJxsqsZjzjBySqsId">
+        DELETE FROM prov_jxsqs_zjzj
+        WHERE p_id = #{id}
+    </delete>
+
+    <select id="getProvRegInfo" resultMap="ProvRegInfoJxsqsVoBaseResultMap" databaseId="mysql">
+        <if test="sqsId != ''">
+            SELECT
+            p.certificate_id as id,
+            r.certificate_code,
+            r.product_name
+            FROM
+            prov_jxsqs_regist p
+            join prov_registration_info r on p.certificate_id = r.id
+            WHERE
+            p.sqs_id = #{sqsId}
+
+            UNION
+        </if>
+        SELECT
+        id,certificate_code, product_name
+        FROM
+        prov_registration_info
+        WHERE
+        prov_id = #{provId}
+        AND mfrs_id = #{mfrsId}
+        AND expdt_end_date > NOW()
+        <if test="certName != null and certName != ''">
+            <bind name="pname" value="'%'+certName+'%'"/>
+            AND product_name LIKE #{pname}
+        </if>
+    </select>
+    <select id="getProvRegInfo" resultMap="ProvRegInfoJxsqsVoBaseResultMap" databaseId="oracle">
+        <if test="sqsId != ''">
+            SELECT
+            p.certificate_id as id,
+            r.certificate_code,
+            r.product_name
+            FROM
+            prov_jxsqs_regist p
+            join prov_registration_info r on p.certificate_id = r.id
+            WHERE
+            p.sqs_id = #{sqsId}
+
+            UNION
+        </if>
+        SELECT
+        id,certificate_code, product_name
+        FROM
+        prov_registration_info
+        WHERE
+        prov_id = #{provId}
+        AND mfrs_id = #{mfrsId}
+        AND expdt_end_date > sysdate
+        <if test="certName != null and certName != ''">
+            <bind name="pname" value="'%'+certName+'%'"/>
+            AND product_name LIKE #{pname}
+        </if>
+    </select>
+    <select id="getBasHos" resultMap="BasCompanyInfoJxsqsVoBaseResultMap">
+        <if test="sqsId != ''">
+            SELECT
+            p.hos_id as id,
+            b.cname as cname
+            FROM
+            prov_jxsqs_hos p
+            join bas_company_info b on p.hos_id = b.id
+            WHERE
+            p.sqs_id = #{sqsId} and b.kind = 1 and b.flag != 0
+
+            UNION
+        </if>
+        SELECT
+        id, cname
+        FROM
+        bas_company_info
+        WHERE
+        kind = 1 AND flag != 0
+        <if test="hosName != null and hosName != ''">
+            <bind name="name" value="'%'+hosName+'%'"/>
+            AND cname LIKE #{name}
+        </if>
+    </select>
+
+    <resultMap id="ProvJxsqsVoBaseResultMap" type="gyqx.spdhdi.mycerts.vo.ProvJxsqsVo">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="prov_id" property="provId"/>
+        <result column="mfrs_id" property="mfrsId"/>
+        <result column="is_mfrs" property="isMfrs"/>
+        <result column="chief_id" property="chiefId"/>
+        <result column="sale_area" property="saleArea"/>
+        <result column="expdt_begin_date" property="expdtBeginDate"/>
+        <result column="expdt_end_date" property="expdtEndDate"/>
+        <result column="is_validing" property="isValiding"/>
+        <result column="file_path" property="filePath"/>
+        <result column="mfrs_name" property="mfrsName" jdbcType="VARCHAR"/>
+        <result column="superior_mfrs_name" property="superiorMfrsName"/>
+        <result column="version" property="version"/>
+        <collection property="relatedCerts" column="id" ofType="ProvRegInfoJxsqsVoBaseResultMap"
+                    select="getRelatedCerts"/>
+        <collection property="forHospitals" column="id" ofType="BasCompanyInfoJxsqsVoBaseResultMap"
+                    select="getForHospitals"/>
+        <collection property="zjzjList" column="id" ofType="ProvJxsqsZjzjBaseResultMap" select="getZjzjList"/>
+    </resultMap>
+    <resultMap id="ProvJxsqsZjzjBaseResultMap" type="gyqx.spdhdi.po.ProvJxsqsZjzj">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="p_id" property="pId" jdbcType="VARCHAR"/>
+        <result column="p_name" property="pName" jdbcType="VARCHAR"/>
+        <result column="file_path" property="filePath" jdbcType="VARCHAR"/>
+        <result column="version" property="version" jdbcType="INTEGER"/>
+    </resultMap>
+    <select id="getJxsqs" resultMap="ProvJxsqsVoBaseResultMap">
+        <if test="mfrsName != '' and mfrsName != null">
+            <bind name="bindMfrsName" value="'%'+mfrsName+'%'"/>
+        </if>
+        SELECT
+        jxsqs.id,
+        prov_id,
+        mfrs_id,
+        is_mfrs,
+        chief_id,
+        sale_area,
+        expdt_begin_date,
+        expdt_end_date,
+        is_validing,
+        file_path,
+        jxsqs.version as version,
+        mfrs.mfrs_name as mfrs_name,
+        (select cname from bas_company_info b where b.id = jxsqs.chief_id) as superior_mfrs_name
+        FROM
+        prov_jxsqs jxsqs
+        join bas_mfrs_info mfrs on mfrs.id = jxsqs.mfrs_id
+        WHERE
+        jxsqs.prov_id = #{provId}
+        <if test="mfrsName != '' and mfrsName != null">
+            and mfrs_name like #{bindMfrsName}
+        </if>
+        <if test="start != null">
+            and expdt_begin_date <![CDATA[ >= ]]> #{start}
+        </if>
+        <if test="end != null">
+            and (expdt_end_date <![CDATA[ <= ]]> #{end} OR is_validing = '1') and expdt_begin_date <![CDATA[ <= ]]>
+            #{end}
+        </if>
+    </select>
+    <select id="getRelatedCerts" resultMap="ProvRegInfoJxsqsVoBaseResultMap">
+        SELECT
+        p.certificate_id AS id,
+            r.certificate_code,
+            r.product_name
+        FROM
+            prov_jxsqs_regist p
+        JOIN prov_registration_info r ON p.certificate_id = r.id
+        WHERE
+            p.sqs_id = #{id}
+    </select>
+    <select id="getForHospitals" resultMap="BasCompanyInfoJxsqsVoBaseResultMap">
+        SELECT
+        p.hos_id AS id,
+        b.cname AS cname
+        FROM
+            prov_jxsqs_hos p
+        JOIN bas_company_info b ON p.hos_id = b.id
+        WHERE
+        p.sqs_id = #{id} AND b.kind = 1 AND b.flag != 0
+    </select>
+    <select id="getZjzjCompanyLikeName" resultType="java.lang.String">
+        <bind name="coName" value="'%'+name+'%'"/>
+        (SELECT cname as name FROM bas_company_info WHERE kind = '2' AND flag = '1' AND cname LIKE #{coName})
+        UNION
+        (SELECT mfrs_name as name FROM bas_mfrs_info WHERE flag='1' AND mfrs_name LIKE #{coName})
+    </select>
+
+    <select id="getZjzjList" resultMap="ProvJxsqsZjzjBaseResultMap">
+        SELECT
+        id,
+        p_id,
+        p_name,
+        file_path,
+        version
+        FROM
+        prov_jxsqs_zjzj
+        WHERE
+        p_id = #{id}
+    </select>
+    <select id="getJxsqsList" parameterType="gyqx.spdhdi.mycerts.vo.ProvJxsqsGoodsVo" resultMap="JxsqsAndDetailMap">
+        select bgi.GOODS_GG,bgi.GOODS_NAME,bcmp.CNAME provName,bcmp.KIND provKind,bcmc.Kind chiefKind,bcmc.CNAME chiefName,bcmm.CNAME mfrsName,
+        t.*, t2.ID dId,t2.SQS_ID,t2.GOODS_ID,t2.SQS_LASTLEVEL_ID,t2.UXID dUXID,t2.FILL_DATE dFillDate,t2.LAST_UPDATE_DATETIME dLastUpdate,
+        t2.VERSION dversion
+        from PROV_JXSQS t
+        left join PROV_JXSQS_GOODS t2 on t.ID = t2.SQS_ID
+        left join BAS_COMPANY_INFO bcmp on t.PROV_ID = bcmp.ID
+        left join BAS_COMPANY_INFO bcmc on t.CHIEF_ID = bcmc.ID
+        left join BAS_COMPANY_INFO bcmm on t.MFRS_ID = bcmm.ID
+        left join BAS_GOODS_INFO bgi on bgi.ID = t2.GOODS_ID
+        where t.id in (select SQS_ID from PROV_JXSQS_GOODS t3
+          <where>
+            <if test="provId != null and provId !=''">
+                and t3.PROV_ID=#{provId}
+            </if>
+            <if test="goodsId != null and goodsId != ''">
+                and t3.GOODS_ID = #{goodsId}
+            </if>
+            <if test="chiefId != null and chiefId != ''">
+                and t3.CHIEF_ID = #{chiefId}
+            </if>
+              <if test="sqsId != null and sqsId != ''">
+                  and t3.SQS_ID = #{sqsId}
+              </if>
+              <if test="notInSqsIds !=null and notInSqsIds.size > 0">
+                  and t3.SQS_ID not in
+                  <foreach item="item" index="index" collection="notInSqsIds" open="("
+                           separator="," close=")">
+                      #{item}
+                  </foreach>
+              </if>
+            <if test="goodsIds !=null and goodsIds.size > 0">
+                and t3.GOODS_ID in
+                <foreach item="item" index="index" collection="goodsIds" open="("
+                         separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+          </where>
+        )
+        order by t2.GOODS_ID
+    </select>
+    <select id="getSqsRelationById" parameterType="java.lang.String" resultMap="JxsqsAndDetailMap">
+        SELECT distinct bgi.GOODS_GG,bgi.GOODS_NAME,bcmp.CNAME provName,bcmp.KIND provKind,bcmc.Kind chiefKind,bcmc.CNAME chiefName,bcmm.CNAME mfrsName,
+          b.*,t2.ID dId,t2.SQS_ID,t2.GOODS_ID,t2.SQS_LASTLEVEL_ID,t2.UXID dUXID,t2.FILL_DATE dFillDate,t2.LAST_UPDATE_DATETIME dLastUpdate,t2.VERSION dversion
+        FROM PROV_JXSQS_GOODS t2 left join PROV_JXSQS b on t2.SQS_ID = b.id
+          left join BAS_COMPANY_INFO bcmp on b.PROV_ID = bcmp.ID
+          left join BAS_COMPANY_INFO bcmc on b.CHIEF_ID = bcmc.ID
+          left join BAS_COMPANY_INFO bcmm on b.MFRS_ID = bcmm.ID
+          left join BAS_GOODS_INFO bgi on bgi.ID = t2.GOODS_ID
+        where b.id= t2.sqs_id
+        start with t2.sqs_id=#{sqsId} CONNECT BY PRIOR t2.sqs_lastlevel_id= t2.sqs_id order by t2.GOODS_ID
+    </select>
+    <resultMap id="JxsqsAndDetailMap" type="gyqx.spdhdi.mycerts.vo.ProvJxsqsNVo">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="PROV_ID" property="provId" jdbcType="VARCHAR"/>
+        <result column="provName" property="provName" jdbcType="VARCHAR"/>
+        <result column="provKind" property="provKind" jdbcType="VARCHAR"/>
+        <result column="chiefName" property="chiefName" jdbcType="VARCHAR"/>
+        <result column="chiefKind" property="chiefKind" jdbcType="VARCHAR"/>
+        <result column="mfrsName" property="mfrsName" jdbcType="VARCHAR"/>
+        <result column="mfrs_id" property="mfrsId" jdbcType="VARCHAR"/>
+        <result column="chief_id" property="chiefId" jdbcType="VARCHAR"/>
+        <result column="is_mfrs" property="isMfrs" jdbcType="VARCHAR"/>
+        <result column="sale_area" property="saleArea" jdbcType="VARCHAR"/>
+        <result column="expdt_begin_date" property="expdtBeginDate"/>
+        <result column="expdt_end_date" property="expdtEndDate"/>
+        <result column="is_validing" property="isValiding"/>
+        <result column="file_path" property="filePath"/>
+        <result column="version" property="version"/>
+        <collection property="lstDetail" ofType="gyqx.spdhdi.mycerts.vo.ProvJxsqsGoodsVo">
+            <id column="dId" property="id" jdbcType="VARCHAR"/>
+            <result column="sqs_id" property="sqsId"/>
+            <result column="GOODS_ID" property="goodsId" jdbcType="VARCHAR"/>
+            <result column="GOODS_NAME" property="goodsName" jdbcType="VARCHAR"/>
+            <result column="GOODS_GG" property="goodsGg" jdbcType="VARCHAR"/>
+            <result column="sqs_lastlevel_id" property="sqsLastlevelId"/>
+            <result column="dUXID" property="uxid"/>
+            <result column="PROV_ID" property="provId" jdbcType="VARCHAR"/>
+            <result column="provName" property="provName" jdbcType="VARCHAR"/>
+            <result column="chief_id" property="chiefId" jdbcType="VARCHAR"/>
+            <result column="chiefName" property="chiefName" jdbcType="VARCHAR"/>
+            <result column="mfrsName" property="mfrsName" jdbcType="VARCHAR"/>
+            <result column="mfrs_id" property="mfrsId" jdbcType="VARCHAR"/>
+            <result column="dversion" property="version"/>
+        </collection>
+    </resultMap>
+    <update id="saveSqsRelation" parameterType="gyqx.spdhdi.po.ProvJxsqsGoods">
+        <foreach collection="list" item="item" index="index" open="begin" close=";end;" separator=";">
+            update PROV_JXSQS_GOODS
+            <set>
+                sqs_lastlevel_id=#{item.sqsLastlevelId},
+                last_update_datetime = sysdate,
+                version = version+1
+            </set>
+            where id = #{item.id, jdbcType=VARCHAR} and version= #{item.version}
+        </foreach>
+    </update>
+    <insert id="saveSqsHos" parameterType="gyqx.spdhdi.po.ProvJxsqsHos">
+        insert into PROV_JXSQS_HOS (id,SQS_ID,PROV_ID,HOS_ID,UXID,FILL_DATE,last_update_datetime,version)
+        <foreach collection="list" item="item" index="index" separator="union all">
+            select #{item.id}, #{item.sqsId},#{item.provId},#{item.hosId},#{item.uxid},sysdate,sysdate,0 from dual
+        </foreach>
+    </insert>
+    <select id="getSqsHosLst" parameterType="java.lang.String" resultMap="sqsHosMap">
+      select t.*,bci.cname hosName from PROV_JXSQS_HOS t left join BAS_COMPANY_INFO bci on t.HOS_ID = bci.id
+      where SQS_ID = #{sqsId} order by t.LAST_UPDATE_DATETIME desc
+    </select>
+    <resultMap id="sqsHosMap" type="gyqx.spdhdi.mycerts.vo.ProvJxsqsHosVo">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="sqs_id" property="sqsId" jdbcType="VARCHAR"/>
+        <result column="prov_id" property="provId" jdbcType="VARCHAR"/>
+        <result column="hos_id" property="hosId" jdbcType="VARCHAR"/>
+        <result column="uxid" property="uxid" jdbcType="VARCHAR"/>
+        <result column="fill_date" property="fillDate" />
+        <result column="last_update_datetime" property="lastUpdateDatetime" />
+        <result column="version" property="version" />
+        <result column="hosName" property="hosName" jdbcType="VARCHAR"/>
+    </resultMap>
+    <delete id="delSqsHos" parameterType="gyqx.spdhdi.po.ProvJxsqsHos">
+        DELETE FROM PROV_JXSQS_HOS
+        WHERE id = #{id} and version=#{version}
+    </delete>
+</mapper>

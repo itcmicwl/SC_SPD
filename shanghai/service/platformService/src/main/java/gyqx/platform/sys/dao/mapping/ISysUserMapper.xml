@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 引入接口，只要实现接口的方法就会调用对应接口方法的 select id -->
+<mapper namespace="gyqx.platform.sys.dao.mapper.ISysUserMapper">
+	<sql id="baseSelect">
+		select
+		uo.id,
+		uo.user_id,
+		uo.org_id as org_id1,
+		uo.org_code,
+		uo.ename,
+		uo.ordinal,
+		uo.cname,
+		uo.tel,
+		uo.email,
+		uo.qq,
+		uo.job,
+		uo.others,
+		uo.scm_code,
+		uo.erp_code,
+		uo.uxid,
+		uo.status,
+		uo.last_update_datetime,
+		uo.version,
+		o.ename orgName,
+		o.code orgCode,
+		u.user_code,
+		u.kind,
+		o.corp_id,
+		o.id as
+		org_id,
+		c.cname as corpName,
+		c.code as corpCode,
+		c.kind as corpKind,
+		c.logo as corpLogo
+		from sys_user_org uo
+		LEFT JOIN sys_org o on
+		uo.org_id=o.id
+		LEFT JOIN sys_user u on uo.user_id =u.id
+		LEFT JOIN
+		bas_company_info c on o.corp_id = c.id
+	</sql>
+	<!--mysql版本 我的职员列表查询 -->
+	<select id="getUserList" resultMap="userMap"
+		parameterType="gyqx.platform.sys.vo.UserBaseInfoVo" databaseId="mysql">
+		<!-- <include refid="baseSelect"></include> -->
+
+		select
+		uo.id,
+		uo.user_id,
+		uo.org_id as org_id1,
+		uo.org_code,
+		uo.ename,
+		uo.ordinal,
+		uo.cname,
+		uo.tel,
+		uo.email,
+		uo.qq,
+		uo.job,
+		uo.others,
+		uo.scm_code,
+		uo.erp_code,
+		uo.uxid,
+		uo.status,
+		uo.last_update_datetime,
+		uo.version,
+		o.ename orgName,
+		o.code orgCode,
+		u.user_code,
+		u.kind,
+		o.corp_id,
+		o.id as
+		org_id,
+		c.cname as corpName,
+		c.code as corpCode,
+		c.kind as corpKind,
+		c.logo as corpLogo
+		from sys_user_org uo
+		LEFT JOIN sys_org o on
+		uo.org_id=o.id
+		LEFT JOIN sys_user u on uo.user_id =u.id
+		LEFT JOIN
+		bas_company_info c on o.corp_id = c.id
+
+		<where>
+			<if test='ename != null and ename !=""'>
+				and uo.ename like CONCAT('%',#{ename},'%')
+			</if>
+
+			<if test='orgId != null and orgId !=""'>
+				and uo.org_id=#{orgId}
+			</if>
+
+			<if test='corpId != null and corpId !=""'>
+				and o.corp_id = #{corpId}
+			</if>
+		</where>
+	</select>
+
+	<!--oracle版本 我的职员列表查询 -->
+	<select id="getUserList" resultMap="userMap"
+		parameterType="gyqx.platform.sys.vo.UserBaseInfoVo" databaseId="oracle">
+		<!-- <include refid="baseSelect"></include> -->
+		select
+		uo.id,
+		uo.user_id,
+		uo.org_id as org_id1,
+		uo.org_code,
+		uo.ename,
+		uo.ordinal,
+		uo.cname,
+		uo.tel,
+		uo.email,
+		uo.qq,
+		uo.job,
+		uo.others,
+		uo.scm_code,
+		uo.erp_code,
+		uo.uxid,
+		uo.status,
+		uo.last_update_datetime,
+		uo.version,
+		o.ename orgName,
+		o.code orgCode,
+		u.user_code,
+		u.kind,
+		o.corp_id,
+		o.id as
+		org_id,
+		c.cname as corpName,
+		c.code as corpCode,
+		c.kind as corpKind,
+		c.logo as corpLogo
+		from sys_user_org uo
+		LEFT JOIN sys_org o on
+		uo.org_id=o.id
+		LEFT JOIN sys_user u on uo.user_id =u.id
+		LEFT JOIN
+		bas_company_info c on o.corp_id = c.id
+		<where>
+			<if test='ename != null and ename !=""'>
+				and uo.ename like '%'||#{ename}||'%'
+			</if>
+
+			<if test='orgId != null and orgId !=""'>
+				and uo.org_id=#{orgId}
+			</if>
+
+			<if test='corpId != null and corpId !=""'>
+				and o.corp_id = #{corpId}
+			</if>
+		</where>
+	</select>
+
+	<select id="getUserByUid" resultMap="userMap">
+		<include refid="baseSelect"></include>
+		<where>
+			uo.user_id = #{uid}
+		</where>
+	</select>
+
+	<select id="getAllUser" resultMap="userMap">
+		<include refid="baseSelect"></include>
+		<where>
+			<if test='hostId != null and hostId !=""'>
+				and c.id= #{hostId}
+			</if>
+			<if test='deptId != null and deptId !=""'>
+				and uo.org_id= #{deptId}
+			</if>
+		</where>
+	</select>
+	<select id="getUsers" resultMap="userMap" parameterType="java.util.Set">
+		<include refid="baseSelect"></include>
+		<where>
+			uo.user_id in
+			<foreach collection="collection" open="(" separator="," close=")" item="val">
+				#{val}
+			</foreach>
+		</where>
+	</select>
+	<!-- mysql版本，新增职员信息 -->
+	<insert id="insertUserOrg" parameterType="gyqx.platform.sys.vo.UserBaseInfoVo"
+		databaseId="mysql">
+		INSERT INTO sys_user_org (
+		id,
+		user_id,
+		org_id,
+		org_code,
+		ename,
+		ordinal,
+		cname,
+		tel,
+		email,
+		qq,
+		job,
+		erp_code,
+		scm_code,
+		others,
+		uxid,
+		STATUS,
+		last_update_datetime,
+		version
+		)
+		VALUES
+		(
+		#{id}, #{userId},#{orgId}, #{orgCode}, #{ename}, #{ordinal},
+		#{cname}, #{tel}, #{email}, #{qq}, #{job}, #{erpCode}, #{scmCode},
+		#{others}, #{userId}, #{status},sysdate(),0)
+	</insert>
+
+	<!-- oracle版本，新增职员信息 -->
+	<insert id="insertUserOrg" parameterType="gyqx.platform.sys.vo.UserBaseInfoVo"
+		databaseId="oracle">
+		INSERT INTO sys_user_org
+		(ID,
+		USER_ID,
+		ORG_ID,
+		ORG_CODE,
+		ENAME,
+		ORDINAL,
+		CNAME,
+		TEL,
+		EMAIL,
+		QQ,
+		JOB,
+		ERP_CODE,
+		SCM_CODE,
+		OTHERS,
+		UXID,
+		STATUS,
+		LAST_UPDATE_DATETIME,
+		VERSION)
+		VALUES
+		(#{id},
+		#{userId},
+		#{orgId},
+		#{orgCode},
+		#{ename},
+		#{ordinal},
+		#{cname},
+		#{tel},
+		#{email},
+		#{qq},
+		#{job},
+		#{erpCode},
+		#{scmCode},
+		#{others},
+		#{userId},
+		#{status},
+		sysdate,
+		0)
+	</insert>
+
+	<update id="setUserStatus" parameterType="gyqx.platform.sys.vo.UserBaseInfoVo">
+		update sys_user_org
+		set status = #{status},
+		last_update_datetime = #{lastUpdateDatetime},
+		version = version + 1
+		where id = #{id}
+		and version = #{version}
+	</update>
+
+	<update id="updateUserBaseInfo" parameterType="gyqx.platform.sys.vo.UserBaseInfoVo">
+		update sys_user_org set
+		<if test="status != null">
+			status = #{status},
+		</if>
+		<if test='ename != null and ename !=""'>
+			ename = #{ename} ,
+		</if>
+		<if test='cname != null and cname !=""'>
+			cname = #{cname},
+		</if>
+		<if test='orgId != null'>
+			org_id = #{orgId} ,
+		</if>
+		<if test='orgCode != null'>
+			org_code = #{orgCode} ,
+		</if>
+		<if test='erpCode != null and erpCode !=""'>
+			erp_code = #{erpCode},
+		</if>
+		<if test='scmCode != null and scmCode !=""'>
+			scm_code = #{scmCode},
+		</if>
+		<if test='tel != null and tel !=""'>
+			tel = #{tel},
+		</if>
+		<if test='qq != null and qq !=""'>
+			qq = #{qq} ,
+		</if>
+		<if test='email != null and email !=""'>
+			email = #{email} ,
+		</if>
+		<if test='job != null and job !=""'>
+			job = #{job} ,
+		</if>
+		<if test='others != null and others !=""'>
+			others = #{others} ,
+		</if>
+		<if test='ordinal != null'>
+			ordinal = #{ordinal},
+		</if>
+		last_update_datetime = #{lastUpdateDatetime},
+		version = version+1
+		where
+		id=#{id}
+		and version = #{version}
+	</update>
+
+	<resultMap type="gyqx.platform.sys.vo.UserBaseInfoVo" id="userMap">
+		<id property="id" column="id" />
+		<id property="userId" column="user_id" />
+		<result property="userCode" column="user_code" />
+		<result property="code" column="code" />
+		<result property="ename" column="ename" />
+		<result property="cname" column="cname" />
+		<result property="orgName" column="orgName" />
+		<result property="orgCode" column="orgCode" />
+		<result property="orgId" column="org_id" />
+		<result property="erpCode" column="erp_code" />
+		<result property="scmCode" column="scm_code" />
+		<result property="tel" column="tel" />
+		<result property="email" column="email" />
+		<result property="qq" column="qq" />
+		<result property="others" column="others" />
+		<result property="job" column="job" />
+		<result property="kind" column="kind" />
+		<result property="status" column="status" />
+		<result property="corpId" column="corp_id" />
+		<result property="corpCode" column="corpCode" />
+		<result property="corpName" column="corpName" />
+		<result property="corpKind" column="corpKind" />
+		<result property="corpLogo" column="corpLogo" />
+		<result property="ordinal" column="ordinal" />
+	</resultMap>
+</mapper>

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 引入接口，只要实现接口的方法就会调用对应接口方法的 select id -->
+<mapper namespace="gyqx.platform.sys.dao.mapper.SysOrgMapper"> 
+<!-- parameterType传入参数类型     resultMap=自己定义的一个返回类型     resultType返回类型 -->
+	<select id="getAll"  resultMap="orgResult">
+		select * from sys_org 
+	</select>  
+	
+	<select id="query"  resultMap="orgResult">
+		select * from sys_org 
+		<where>
+		    <if test="id != null and id !=''">
+		      and id = #{id}  
+		    </if>
+		      <if test="pid != null ">
+		     and    pid = #{pid}  
+		    </if>
+		     <if test="corpId != null and corpId !=''">
+		     and    corp_id = #{corpId}  
+		    </if>
+		    <if  test="cname != null and cname !=''">
+		      <bind name="cname" value="'%' + cname + '%'" />
+		         and cname LIKE  #{cname}  
+		    </if>
+			<if test="ename != null">  
+			 <bind name="ename" value="'%' + ename + '%'" />
+				and ename LIKE  #{ename}  
+			</if>  
+		  and    flag=1
+		</where>
+		ORDER BY ordinal
+	</select>
+	
+	<select id="getOrgVo"  resultMap="orgVoResult">
+	 		select w.cname as pCname,w.ename as pName,o.* from sys_org o LEFT JOIN sys_org w ON o.pid=w.id 
+           <where>
+			    <if test="id != null and id !=''">
+			        o.id = #{id}  
+			    </if>
+			    and o.flag=1
+		   </where>
+	</select>
+	
+	
+	<select id ="stateDeleteOrgs">
+	 update sys_org set flag =0 
+	 <where>
+	  <if  test="code != null  and code !=''">
+		          code LIKE CONCAT('${code}','%' )
+      </if>
+	 </where>
+	           
+      
+	</select>
+	<!--  	update  sys_org  set `code`=replace(code,'company-009:003','company-009:001.001.001') where code like 'company-009:003%' -->
+	<update id="updateAllSonCode">
+      update  sys_org org  set org.code=replace(org.code,#{oldCode},#{newCode})
+      <if test="_databaseId == 'mysql'">
+		org.last_update_datetime = sysdate(),
+	</if>
+	<if test="_databaseId == 'oracle'">
+		org.last_update_datetime = sysdate,
+	</if>
+	org.version=org.version+1
+       where org.code like CONCAT('${oldCode}','%' )
+	</update>
+	
+	<resultMap type="gyqx.platform.sys.vo.SysOrgVo" id="orgVoResult">
+		<id property="id" column="id"/>
+		<result property="pid"  column="pid"/>
+		<result property="code"  column="code"/>
+		<result property="selfCode"  column="self_Code"/>
+		<result property="kind"  column="kind"/>
+		<result property="ename"  column="ename"/>
+		<result property="cname"  column="cname"/>
+		<result property="ordinal"  column="ordinal"/>  
+		<result property="shortPinyin"  column="short_pinyin"/>
+		<result property="address"  column="address"/> 
+		<result property="contactWay"  column="contact_way"/> 
+		<result property="remark"  column="remark"/> 
+		<result property="nodeKind"  column="node_kind"/> 
+		<result property="flag"  column="flag"/>
+		<result property="lastUpdateDatetime"  column="last_update_datetime"/>
+	    <result property="version"  column="version"/>
+		<result property="pCname"  column="pCname"/>
+		<result property="pName"  column="pName"/>
+		<result property="erpCode"  column="erp_code"/> 
+		
+		
+	</resultMap>
+	
+	<resultMap type="sysOrg" id="orgResult">
+		<id property="id" column="id"/>
+		<result property="pid"  column="pid"/>
+		<result property="code"  column="code"/>
+		<result property="selfCode"  column="self_Code"/>
+		<result property="kind"  column="kind"/>
+		<result property="ename"  column="ename"/>
+		<result property="cname"  column="cname"/>
+		<result property="ordinal"  column="ordinal"/>  
+		<result property="shortPinyin"  column="short_pinyin"/>
+		<result property="address"  column="address"/> 
+		<result property="contactWay"  column="contact_way"/> 
+		<result property="erpCode"  column="erp_code"/> 
+		<result property="remark"  column="remark"/> 
+		<result property="nodeKind"  column="node_kind"/> 
+		<result property="flag"  column="flag"/>
+		<result property="lastUpdateDatetime"  column="last_update_datetime"/>
+	    <result property="version"  column="version"/>
+	
+	</resultMap>
+	
+</mapper>

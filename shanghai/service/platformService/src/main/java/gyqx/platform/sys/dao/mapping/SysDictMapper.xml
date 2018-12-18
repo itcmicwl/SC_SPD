@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 引入接口，只要实现接口的方法就会调用对应接口方法的 select id -->
+<mapper namespace="gyqx.platform.sys.dao.mapper.SysDictMapper"> 
+<!-- parameterType传入参数类型     resultMap=自己定义的一个返回类型     resultType返回类型 -->
+	<select id="query"  resultMap="dictResult">
+		select * from sys_dict
+		<where>
+		    <if test="id != null">
+		        id = #{id}  
+		    </if>
+		      <if test="kind != null">
+		        kind = #{kind}  
+		    </if>
+		</where>
+		 ORDER BY ordinal,id 
+	</select>
+	
+	<select id="insert">
+			insert into sys_dict
+		    (id,ename,cname,pid,kind,ordinal,code,remark,uxid,mt,version)
+		    values (#{id},#{ename},#{cname},#{pid},#{kind},#{ordinal},#{code},#{remark},#{uid},#{mt},#{version})
+	</select>
+	
+	<select id="update">  
+			update  sys_dict
+			<!--  (id,name,cname,pid,kind,ordinal,code,remark,uid,mt,version)  -->
+			<set>
+			       <if test="ename != null">ename=#{ename},</if>
+			       <if test="cname != null">cname=#{cname},</if>
+			       <if test="ordinal != null">ordinal=#{ordinal},</if>
+			       <if test="remark != null">remark=#{remark},</if>
+			       <if test="uid != null">uxid=#{uid},</if>
+			 	   <if test="mt != null">mt=#{mt},</if>
+			 	   <if test="kind != null">kind=#{kind},</if>
+			 	   <if test="version != null">version=#{version}+1</if>
+			       
+			</set>
+		   <where>
+		   id =#{id}
+		   </where>
+	</select>
+	<select id="delete">
+	        delete from sys_dict where  id=#{id}
+	</select>
+
+	
+<select id="queryDictValueVos" resultMap="dictValueVoResult">
+	  select v.*,d.ename as dictName,d.cname as dictCname from sys_dict_value v left join  sys_dict d on v.dict_id= d.id
+		<where>
+		    <if test="dictId != null and dictId!=''">
+		       	and  v.dict_id = #{dictId}  
+		    </if>   
+		     <if test="id != null and id!=''">
+		      	and  v.id = #{id}  
+		    </if> 
+		     <if test="dictName != null and dictName!=''">
+		      	and  d.ename = #{dictName}  
+		    </if> 
+		    <if test="val != null">
+		      	and  v.val = #{val}  
+		    </if> 
+		</where>
+		 ORDER BY v.ordinal,v.id 
+</select>
+
+
+<select id="updateDictValue" resultMap="dictValueResult">
+          update   sys_dict_value 
+              <set>
+			       <if test="ename != null">ename=#{ename},</if>
+			       <if test="val != null">val=#{val},</if>
+			       <if test="ordinal != null">ordinal=#{ordinal},</if>
+			       <if test="extField != null">ext_field=#{extField},</if>	       
+			       <if test="remark != null">remark=#{remark},</if>
+			       <if test="uid != null">uxid=#{uid},</if>
+			 	   <if test="mt != null">mt=#{mt},</if>
+			 	   <if test="version != null">version=#{version}+1</if>
+			       
+			</set>
+		   <where>
+		   id =#{id}
+		   </where>
+</select>
+
+<select id="insertDictValue" >
+       	insert into sys_dict_value
+		    (id,dict_id,ename,ordinal,val,ext_field,remark,uxid,mt,version)
+		    values (#{id},#{dictId},#{ename},#{ordinal},#{val},#{extField},#{remark},#{uid},#{mt},#{version})
+		 
+</select>
+
+<select id="deleteDictValue" >
+         delete from sys_dict_value where  id=#{id}
+		 
+</select>
+
+
+
+	 <resultMap type="gyqx.platform.po.SysDictValue" id="dictValueResult">
+		<id property="id" column="id"/>
+		<result property="dictId"  column="dict_id"/>
+		<result property="ordinal"  column="code"/>
+	    <result property="ename"  column="ename"/>
+		<result property="val"  column="val"/>
+		<result property="extField"  column="ext_field"/>  
+		<result property="remark"  column="remark"/> 
+		<result property="uid"  column="uxid"/>
+		<result property="mt"  column="mt"/>
+	    <result property="version"  column="version"/>
+
+	</resultMap>
+	
+	
+    <resultMap type="gyqx.platform.sys.vo.SysDictValueVo" id="dictValueVoResult">
+		<id property="id" column="id"/>
+		<result property="dictId"  column="dict_id"/>
+		<result property="ordinal"  column="code"/>
+	    <result property="ename"  column="ename"/>
+		<result property="val"  column="val"/>
+		<result property="extField"  column="ext_field"/>  
+		<result property="remark"  column="remark"/> 
+		<result property="uid"  column="uxid"/>
+		<result property="mt"  column="mt"/>
+	    <result property="version"  column="version"/>
+	    <result property="dictCname"  column="dictCname"/>
+	</resultMap>
+	
+	
+	
+	<resultMap type="gyqx.platform.po.SysDict" id="dictResult">
+		<id property="id" column="id"/>
+		<result property="pid"  column="pid"/>
+		<result property="code"  column="code"/>
+		<result property="kind"  column="kind"/>
+		<result property="ename"  column="ename"/>
+		<result property="cname"  column="cname"/>
+		<result property="ordinal"  column="ordinal"/>  
+		<result property="remark"  column="remark"/> 
+		<result property="uid"  column="uxid"/>
+		<result property="mt"  column="mt"/>
+	    <result property="version"  column="version"/>
+		
+	</resultMap>
+	
+	<!-- 分页查询字典信息 -->
+	<select id="getDictListPage"  resultMap="dictResult">
+		select * 
+		from sys_dict 
+	    <if test="queryParam != null and queryParam != ''">
+	     <bind name="queryParam" value="'%' + queryParam + '%'" />
+			where (ename like #{queryParam} or cname like #{queryParam})
+	    </if>
+		 ORDER BY ordinal,id 
+	</select>
+
+	
+</mapper>

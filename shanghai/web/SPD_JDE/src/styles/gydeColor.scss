@@ -1,0 +1,57 @@
+$color-primary: #20a0ff;
+.layOutHeader{background: #f7f9fa;}
+.nav_split_icon{
+    background-color: $color-primary !important;
+}
+.breadcrumb-container:after {
+     background-color: $color-primary;
+}
+a.router-link-active:before{
+    background: $color-primary;
+}
+.el-dialog__header{background: $color-primary;}
+.el-dialog__title{color:#fff;}
+.gyactive{
+    background: $color-primary;
+    color: #fff;
+}
+.userinfo-inner {
+    color: #053a4a;    
+}
+.userinfo-inner:hover {
+    color: $color-primary;						
+}
+.el-submenu.is-active .el-submenu__title {
+	border-left: solid 5px;
+	border-left-color: $color-primary;
+}
+
+.el-button--gy_danger {
+    color: #fff;
+    background-color: #6EBF60;
+    border-color: #6EBF60;
+}
+.el-button--gy_danger:focus{
+    background: #6EBF60;
+    border-color: #6EBF60;
+    color: #fff;
+}
+.el-button--gy_primary{
+    color:#fff;
+    background-color: #43C1B5;
+    border-color: #43C1B5;
+}
+.el-button--gy_danger:focus{
+    background: #43C1B5;
+    border-color: #43C1B5;
+    color: #fff;
+}
+
+.el-table__body tr.current-row>td {
+	background: #9eccf3;	
+}
+.el-tree--highlight-current .el-tree-node.is-current>.el-tree-node__content {
+    background-color: $color-primary;
+    color: #fff;
+}
+

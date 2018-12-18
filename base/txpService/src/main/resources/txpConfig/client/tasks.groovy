@@ -1,0 +1,14 @@
+[
+ 	siteId:'shanghai-huashanbei',
+ 	centerDestinationName:'CenterDataSync',
+ 	reportDestinationName:'reportResult',
+ 	reportUri:'direct:reportToCenter',
+ 	fileDownloadPath:'f:/temp',//'f:/temp/sync/center/download',
+ 	syncTaskConfigs:[],
+ 	dataUploadTaskConfigs:[],
+ 	dataDownloadTaskConfigs:[],
+ 	fileDownloadTaskConfigs:[],
+ 	fileUploadTaskConfigs:[],
+ 	transferTaskConfigs:[],
+ 	siteFileCompareConfigs:[]
+ ];

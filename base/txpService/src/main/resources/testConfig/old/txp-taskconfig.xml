@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:camel="http://camel.apache.org/schema/spring"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+      	 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd  
+           http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+           http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+	<bean id="txpClientConfig" class="gyqx.txp.configuration.TxpClientConfig">
+		<constructor-arg name="cfgfile" >
+    		<value>/txpConfig/client/tasks.groovy</value>
+    	</constructor-arg>
+    	<constructor-arg name="syncTaskConfigsPath" >
+    		<value>/txpConfig/client/syncTaskConfigs</value>
+    	</constructor-arg>
+    	<constructor-arg name="dataUploadTaskConfigsPath" >
+    		<value>/txpConfig/client/dataUploadTaskConfigs</value>
+    	</constructor-arg>
+    	<constructor-arg name="dataDownloadTaskConfigsPath" >
+    		<value>/txpConfig/client/dataDownloadTaskConfigs</value>
+    	</constructor-arg>
+    	<constructor-arg name="fileDownloadTaskConfigsPath" >
+    		<value>/txpConfig/client/fileDownloadTaskConfigs</value>
+    	</constructor-arg>
+    	<constructor-arg name="fileUploadTaskConfigsPath" >
+    		<value>/txpConfig/client/fileUploadTaskConfigs</value>
+    	</constructor-arg>
+    	<constructor-arg name="transferTaskConfigsPath" >
+    		<value>/txpConfig/client/transferTaskConfigs</value>
+    	</constructor-arg>
+	</bean>
+	
+	<bean class="gyqx.txp.runtime.ClientSyncWorker" depends-on="config.dbsources" init-method="init">
+		<property name="config" ref ="txpClientConfig">
+		</property>
+		<property name="defaultDataSourceName" value ="localhost">
+		</property>
+	</bean>
+	
+	
+	<bean id="txpServerConfig" class="gyqx.txp.configuration.TxpServerConfig" >
+		<constructor-arg name="cfgfile" >
+    		<value>/txpConfig/server/tasks.groovy</value>
+    	</constructor-arg>
+    	<constructor-arg name="syncTaskConfigsPath" >
+    		<value>/txpConfig/server/syncTaskConfigs</value>
+    	</constructor-arg>
+    	<constructor-arg name="dataUploadTaskConfigsPath" >
+    		<value>/txpConfig/server/dataUploadTaskConfigs</value>
+    	</constructor-arg>
+    	<constructor-arg name="dataDownloadTaskConfigsPath" >
+    		<value>/txpConfig/server/dataDownloadTaskConfigs</value>
+    	</constructor-arg>
+    	<constructor-arg name="fileDownloadTaskConfigsPath" >
+    		<value>/txpConfig/server/fileDownloadTaskConfigs</value>
+    	</constructor-arg>
+    	<constructor-arg name="fileUploadTaskConfigsPath" >
+    		<value>/txpConfig/server/fileUploadTaskConfigs</value>
+    	</constructor-arg>
+    	<constructor-arg name="transferTaskConfigsPath" >
+    		<value>/txpConfig/server/transferTaskConfigs</value>
+    	</constructor-arg>
+	</bean>
+	
+	
+	<bean class="gyqx.txp.runtime.ServerSyncWorker" depends-on="config.dbsources" init-method="init">
+		<property name="config" ref ="txpServerConfig">
+		</property>
+		<property name="defaultDataSourceName" value ="center">
+		</property>
+	</bean>
+
+	
+</beans>

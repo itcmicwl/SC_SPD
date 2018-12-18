@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="gyqx.platform.permission.dao.mapper.ISysRoleMapper">
+	<select id="list"  resultMap="sysRoleMap" parameterType="gyqx.platform.po.SysRole">
+		select id,company_id,cname,code,remark,kind,flag,role_template_id,uxid,mt,version from sys_role
+		<where>
+			<if test='companyId != null and companyId != ""'>
+				company_id = #{companyId}
+			</if>
+		</where>
+	</select>
+ 	<resultMap type="gyqx.platform.po.SysRole" id="sysRoleMap">
+		<id property="id" column="id"/>
+		<result property="companyId"  column="company_id"/>
+		<result property="cname"  column="cname"/>
+		<result property="code"  column="code"/>
+		<result property="remark"  column="remark"/>
+		<result property="kind"  column="kind"/>
+		<result property="flag"  column="flag"/>
+		<result property="roleTemplateId"  column="role_template_id"/>
+		<result property="uxid"  column="uxid"/>
+		<result property="mt"  column="mt"/>
+		<result property="version"  column="version"/>
+	</resultMap> 
+	
+	<update id="update" parameterType="gyqx.platform.po.SysRole" >
+		update sys_role
+		<set>
+			<if test='companyId != null'>  
+				company_id = #{companyId},
+			</if> 
+			<if test='cname != null'>  
+				cname = #{cname},
+			</if> 
+			<if test='code != null'>  
+				code = #{code},
+			</if> 
+			<if test='remark != null'>  
+				remark = #{remark},
+			</if> 
+			<if test='kind != null'>  
+				kind = #{kind},
+			</if> 
+			<if test='flag != null'>  
+				flag = #{flag},
+			</if> 
+			<if test='roleTemplateId != null'>  
+				role_template_id = #{roleTemplateId},
+			</if> 
+			<if test='uxid != null'>  
+				uxid = #{uxid},
+			</if> 
+			<if test='mt != null'>  
+				mt = #{mt},
+			</if> 
+			version=version+1,
+		</set>
+		<where>
+			and id = #{id}
+			and version= #{version}
+		</where>
+	</update>
+	
+	<insert id="insert" parameterType="gyqx.platform.po.SysRole" >
+		insert into sys_role 
+		( id , company_id , cname , code , remark , kind , flag , role_template_id , uxid , mt , version  )
+		values (#{id},#{companyId},#{cname},#{code},#{remark},#{kind},#{flag},#{roleTemplateId},#{uxid},#{mt},#{version})
+	</insert>
+</mapper>

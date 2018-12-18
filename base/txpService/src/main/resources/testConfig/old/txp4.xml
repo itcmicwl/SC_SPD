@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:c="http://camel.apache.org/schema/spring"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+      	 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd  
+           http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+           http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+
+	<context:property-placeholder location="classpath*:gyqx/txp/*.properties" />
+	
+	<import resource="txp-dbconfig.xml"/>
+	<import resource="txp-jms.xml"/>
+	<import resource="txp-taskconfig.xml"/>
+	<import resource="txp-errorhanders.xml"/>
+	<import resource="txp-beans.xml"/>
+    
+    <c:camelContext >
+    
+    	<c:route id="test" errorHandlerRef="defaultDeadLetterErrorHandler">
+    		<c:from uri="timer://test?fixedRate=true&amp;period=500&amp;repeatCount=1" />
+    		<c:transform>
+	    		<c:groovy>
+	    		def db = DbSources.getCurrent().getDbSource("center");
+	    		def utils = new DbUtils(db);
+	    		
+	    		def db0 = DbSources.getCurrent().getDbSource("localhost");
+	    		def utils0 = new DbUtils(db0);
+	    		headers.txp_db = db0;
+	    		headers.txp_utils = utils0;
+	    		headers.txp_tablename = 'sys_table_column';
+	    		
+	    		def metaInfo = DbSources.getCurrent().getDbMetaInfo(db0);
+				def tm = metaInfo.get(headers.txp_tablename);
+				def insertSql = TaskSqlBuilder.buildDefaultInsertSql(tm) ;
+	    		headers.txp_insertsql = insertSql;
+	    		
+	    		def rows = utils.queryForStreamList('select * from sys_table_column')
+	    		</c:groovy>
+	    	</c:transform>
+	    	
+	    	<c:split streaming="true">
+	    		<c:simple>body</c:simple>
+	    		<c:log message="m: ${header.txp_insertsql}"/>
+	    		<c:transform>
+	    			<c:groovy>
+
+	    			def utils = headers.txp_utils;	  
+	    			def insertSql = headers.txp_insertsql;
+	    			def row = body;
+	    			utils.update(insertSql,row);	    			
+	    			
+	    			</c:groovy>
+	    		</c:transform>
+	    	</c:split>
+	    	<c:log message="userMessageReceive writeMessage ${body}  end" />
+	    </c:route>
+
+    	<c:route id="userMessageToDb" errorHandlerRef="testErrorHandler">
+    		<c:from uri="activemq:queue:user_messages_notify??requestTimeout=100000&amp;acknowledgementModeName=CLIENT_ACKNOWLEDGE" />
+    		<c:transform>
+	    		<c:groovy>
+	    		def utils = CamelRuntimeState.getBean(UserMessageUtils);
+	    		utils.writeMessage(body);
+	    		</c:groovy>
+	    	</c:transform>
+    		<c:log message="userMessageReceive writeMessage ${body}  end" />
+    	</c:route>
+    	
+    	<c:route id="loadSyncDataToFileTrigger" errorHandlerRef="defaultDeadLetterErrorHandler">
+    		<c:from uri="timer://foo?fixedRate=true&amp;period=500&amp;repeatCount=1" />
+    		<c:transform>
+	    		<c:groovy>
+	    		headers.txpMethod = 'syncData';//"fileDownload";
+	    		headers.txpTaskNames = '生产厂商信息同步x'; //'公司证照图片信息同步x';
+	    		body="my message ..sdfsdf."
+	    		</c:groovy>
+	    	</c:transform>
+    		<c:to uri="seda:startLoadTxpData"/>
+<!--     		<c:to  uri="activemq:queue:testhosp?requestTimeout=100000&amp;timeToLive=100000" /> -->
+    	</c:route>
+    	
+    	<c:route id="loadSyncDataToFileTriggerByMq" errorHandlerRef="defaultDeadLetterErrorHandler">
+    		
+    		<c:from uri="activemq:queue:startLoadTxpData?requestTimeout=100000" />
+    		<c:transform>
+	    		<c:groovy>
+	    		headers.txpMethod = "syncData";
+	    		headers.txpTaskNames = body;
+	    		</c:groovy>
+    		</c:transform>
+    		<c:to uri="seda:startLoadTxpData"/>
+    	</c:route>
+    	
+		<c:route id="loadTxpDataToFile" errorHandlerRef="defaultDeadLetterErrorHandler" >
+			<c:from uri="seda:startLoadTxpData" /> 
+    		<c:transform>
+	    		<c:groovy>
+	    		def result = ClientSyncWorker.getCurrent().loadTxpDataRequest(headers);	    		
+	    		headers.txpErrorCode = result.code;
+	    		if(result.code &lt; 0){	
+	    			headers.txpErrorMessage = result.errorMessage;
+	    			headers.txpNextEndpoint='direct:txpError';
+	    		}
+	    		body = result.txpMessages;
+	    		</c:groovy>
+    		</c:transform>
+    		<c:choice>
+    			<c:when>
+					<c:groovy >headers.txpErrorCode == -1</c:groovy>
+					<c:log message="headers.txpErrorCode == -1 " />
+					<c:toD uri="${header.txpNextEndpoint}" ></c:toD>
+	    		</c:when>
+	    		<c:otherwise>
+			    	<c:split>
+		    			<c:simple>${body}</c:simple>
+		    			<c:transform>
+		    				<c:groovy>
+		    					headers.CamelFileName = "data.json";
+		    					body = Json.writeObjectToBytes(body);
+		    				</c:groovy>
+		    			</c:transform>
+						<c:marshal >
+							<c:zipFile />
+						</c:marshal>
+						<c:transform>
+				    		<c:groovy>
+				    		def now = new Date();
+				    		headers.hospitalId = TxpClientConfig.cfg.hospitalId;
+				    		headers.CamelFileName ='sync_' + now.format("yyyy-MM-dd_HH_mm_ss-SSS")+ ".zip";
+				    		body
+				    		</c:groovy>
+			    		</c:transform>
+			    		<c:log message="loadSyncDataToFile ${header.CamelFileName}  start .............................................." />
+			    		<c:to uri="file://target/txpfiles/to-center/in" />
+			    		<c:log message="loadSyncDataToFile ${header.CamelFileName}  end" />
+		    		</c:split>
+	    		</c:otherwise>	    		
+	    	</c:choice>    		
+    	</c:route>
+    	
+    	<c:route id="uploadSyncFileToCenter" errorHandlerRef="networkDeadLetterErrorHandler">
+    		<c:from uri="file://target/txpfiles/to-center/in?sortBy=file:onlyname.noext;file:modified" />
+    		<c:transform>
+	    		<c:groovy>
+	    		headers.CamelJmsDestinationName = TxpClientConfig.cfg.centerDestinationName;
+	    		body
+	    		</c:groovy>
+    		</c:transform>
+    		<c:to uri="activemq:queue:dummy?requestTimeout=100000" />
+    		<c:log message="uploadSyncFileToCenter ${header.CamelFileNameOnly} to ${header.CamelJmsDestinationName}  end" />
+    	</c:route>
+    	
+    	<c:route id="downloadResponseFromCenter" errorHandlerRef="networkDeadLetterErrorHandler"> 
+    		<c:from uri="activemq:queue:hosp-group01_hosp001?requestTimeout=100000&amp;acknowledgementModeName=CLIENT_ACKNOWLEDGE" />
+    		<c:bean beanType="gyqx.txp.runtime.processor.CheckpointProcessor"></c:bean>
+    		<c:transform>
+	    		<c:groovy>
+	    		headers.CamelFileName = headers.CamelFileNameOnly ; 
+	    		body
+	    		</c:groovy>
+    		</c:transform>
+    		<c:to uri="file://target/txpfiles/from-center/in" />
+    		<c:log message="downloadResponseFromCenter ${header.CamelFileNameOnly} end " />
+    	</c:route>
+    	
+    	<c:route id="downloadNotifyFromCenter" errorHandlerRef="networkDeadLetterErrorHandler"> 
+    		<c:from uri="activemq:topic:hosp-group01?requestTimeout=100000&amp;acknowledgementModeName=CLIENT_ACKNOWLEDGE&amp;clientId=hosp001&amp;durableSubscriptionName=hosp001" />
+    		<c:transform>
+	    		<c:groovy>
+	    		def now = new Date();
+	    		headers.CamelFileName = 'sync_' + now.format("yyyy-MM-dd_HH_mm_ss-SSS")+ ".zip"; 
+	    		body
+	    		</c:groovy>
+    		</c:transform>
+     		<c:to uri="file://target/txpfiles/from-center/notify-in" /> 
+    		<c:log message="downloadNotifyFromCenter : ${header.CamelFileName} end " />
+    	</c:route>
+    	
+    	<c:route id="read_notify-in_to_txpTaskDataProc " errorHandlerRef="defaultDeadLetterErrorHandler" >
+    		<c:from uri="file://target/txpfiles/from-center/notify-in?sortBy=file:onlyname.noext;file:modified" />
+    		<c:to uri="direct:txpTaskDataProc"/>
+    		<c:log message="read_notify-in_to_txpTaskDataProc : ${header.CamelFileName} end " />
+    	</c:route>
+    	
+    	<c:route id="txpTaskNotifyProcRoute" errorHandlerRef="defaultDeadLetterErrorHandler" >
+    		<c:from uri="direct:txpTaskNotifyProc" />    		
+    		<c:unmarshal>
+    			<c:zipFile />
+    		</c:unmarshal>
+    		<c:transform>
+	    		<c:groovy>
+	    		def json = body
+	    		println 'read files from notify-in'
+	    		headers.TxpNotifyMessage = json;
+	    		body = Json.readObject(json);
+	    		NotifyMessageBucket.filterPut(body);
+	    		body;
+	    		</c:groovy>
+	    	</c:transform>
+	    	<c:log message="NotifyMessageBucket.filterPut : ${header.TxpNotifyMessage} ,end " />
+    	</c:route>
+    	
+    	<c:route id = "pull_TaskNotifications" errorHandlerRef="defaultDeadLetterErrorHandler" >
+    		<c:from uri="timer://taskNotify?fixedRate=true&amp;period=50000000" />
+    		<c:transform>
+   				<c:groovy>
+   					body = NotifyMessageBucket.pullTaskNotifications() 
+    			</c:groovy>
+   			</c:transform>
+   			<c:choice>
+    			<c:when>
+					<c:groovy >body== null || body.size() == 0</c:groovy>
+					<c:log message="NotifyMessageBucket.pullTaskNotifications() == null ,end" />
+	    		</c:when>
+	    		<c:otherwise>
+		    		<c:transform>
+			    		<c:groovy>
+			    		<![CDATA[
+			    			
+		    			def taskNotifications = body;
+		    			headers.txpMethod = "syncData";
+		    			headers.txpTaskNames="";
+		    			taskNotifications.each{
+		    				if(headers.txpTaskNames != "")
+		    					headers.txpTaskNames +=",";
+		    				headers.txpTaskNames += it.taskName;
+		    			}
+
+			    		]]>
+			    		</c:groovy>
+		    		</c:transform>
+		    		<c:log message="NotifyMessageBucket.pullTaskNotify: ${header.txpTaskNames} ,end " />
+		    		<c:to uri="seda:startLoadTxpData"/>
+	    		</c:otherwise>
+    		</c:choice>	
+    	</c:route>
+    	
+    	<c:route id="read_center_from_in_to_txpTaskDataProc" errorHandlerRef="defaultDeadLetterErrorHandler" >
+    		<c:from uri="file://target/txpfiles/from-center/in?sortBy=file:onlyname.noext;file:modified" />
+    		<c:log message="read_center_from_in_to_txpTaskDataProc : ${header.CamelFileName} end  " />
+    		<c:to uri="direct:txpTaskDataProc"/>    		
+    	</c:route>
+    	
+    	<!-- 数据交换处理 -->
+    	<c:route id="txpTaskDataProcRoute" errorHandlerRef="defaultDeadLetterErrorHandler" >
+    		<c:from uri="direct:txpTaskDataProc" />    		
+    		<c:unmarshal>
+    			<c:zipFile />
+    		</c:unmarshal>
+    		<c:transform>
+	    		<c:groovy>
+	    		<![CDATA[
+	    		body = Json.readObject(body);
+	    		def message = body as TxpMessage
+	    		headers.TxpMessage = message;
+	    		def result = ClientSyncWorker.getCurrent().doTxpTaskDataProc(message);
+	    		if(result == null )
+	    			headers.txpNextEndpoint='direct:null';
+	    		else if(result.code <0){
+	    			headers.txpTaskName = result.taskName;
+	    			headers.txpErrorCode = result.code;
+	    			headers.txpErrorMessage = result.errorMessage;
+	    			headers.txpNextEndpoint='direct:txpError';
+	    		}
+	    		else{
+	    			headers.txpMethod = result.eagerMethod;
+	    			headers.txpTaskNames = result.taskName;
+	    			headers.txpNextEndpoint = "direct:null";
+	    			if(result.hasMore)
+	    				headers.txpNextEndpoint = 'seda:startLoadTxpData';
+	    			if(result.eagerNextUri != null)
+	    				headers.txpNextEndpoint = result.eagerNextUri;
+	    		}
+	    		body = result;
+	    		]]>
+	    		</c:groovy>
+    		</c:transform>
+    		<c:log message="syncFileToHosDb: ${header.TxpMessage.taskName} end" />
+    		<c:toD uri="${header.txpNextEndpoint}" ></c:toD>
+    	</c:route>
+    	
+    	<!-- 退出 -->
+    	<c:route id="txp_exit">
+    		<c:from uri="direct:null"></c:from>
+    		<c:log message="direct:null end." />
+    	</c:route>
+    	
+    	<!-- 错误信息收集 -->
+    	<c:route id="txp_error">
+    		<c:from uri="direct:txpError"></c:from>
+    		<c:log message="txpTaskName:${header.txpTaskName} \ntxpErrorCode:${header.txpErrorCode} \n txpError:${header.txpErrorMessage} " />
+    	</c:route>
+    	
+    	<!-- ***************** 数据中心  ***************** -->
+    	
+    	<c:route id="readRequestFromSub" errorHandlerRef="networkDeadLetterErrorHandler" >
+    		<c:from uri="activemq:queue:CenterDataSync?requestTimeout=100000" />
+<!--     		<c:threads poolSize="32" maxQueueSize="32" maxPoolSize="32" /> -->
+    		<c:unmarshal>
+    			<c:zipFile />
+    		</c:unmarshal>
+    		
+    		<c:transform>
+	    		<c:groovy>
+	    		<![CDATA[
+	    		println 'readRequestFromSub'
+	    		body = Json.readObject(body);
+	    		
+	    		headers.TxpMessage = body;
+	    		headers.CamelJmsDestinationName = 'hosp-group01_' + headers.TxpMessage.fromId;
+	    		def result = ServerSyncWorker.getCurrent().txpRequestProc(headers.TxpMessage);
+	    		
+	    		headers.txpTaskName = result.taskName;
+	    		if(result.code <0){
+	    			
+	    			headers.txpErrorCode = result.code;
+	    			headers.txpErrorMessage = result.errorMessage;
+	    			headers.txpNextEndpoint='direct:txpError';
+	    		}else{
+	    			headers.txpNextEndpoint='direct:responseResult';
+	    		}
+	    		
+			    body = result.txpMessage;
+			    ]]>
+	    		</c:groovy>
+    		</c:transform>
+    		
+    		<c:toD uri="${header.txpNextEndpoint}" ></c:toD>
+    		
+    	</c:route>  
+    	
+    	<c:route id="response_result" errorHandlerRef="defaultDeadLetterErrorHandler">
+    		<c:from uri="direct:responseResult" />
+    		<c:choice>
+    			<c:when>
+					<c:groovy >body== null</c:groovy>
+					<c:log message="readRequestFromSub body== null" />
+	    		</c:when>
+	    		<c:otherwise>
+		    		<c:transform>
+	    				<c:groovy>
+	    					body = Json.writeObjectToBytes(body);
+		    			</c:groovy>
+	    			</c:transform>	
+					<c:marshal >
+						<c:zipFile />
+					</c:marshal>
+		    		<c:log message=" ${header.CamelJmsDestinationName}" />
+		    		<c:to uri="activemq:queue:hosp" />
+	    		</c:otherwise>
+    		</c:choice>
+    		<c:log message="responseResult: ${header.TxpMessage.fromId} end" />
+    	</c:route>
+    	
+    	
+    	<c:route id="collectTableChangedMessagesThenPutNotification" errorHandlerRef="defaultDeadLetterErrorHandler">
+    		<c:from uri="activemq:queue:sql.table.changed?requestTimeout=100000&amp;acknowledgementModeName=CLIENT_ACKNOWLEDGE" />
+    		<c:bean beanType="gyqx.txp.biz.NotifyProcessor"></c:bean>
+    		<c:choice>
+    			<c:when>
+					<c:groovy >body== null</c:groovy>
+					<c:log message="NotifyProcessor body== null" />
+	    		</c:when>
+	    		<c:otherwise>
+	    			<c:transform>
+		    			<c:groovy >
+		    				NotifyMessageBucket.put(body);
+		    			</c:groovy>
+		    		</c:transform>
+	    			<c:log message="read queue:sql.table.changed and put task ${body.taskName} . end." />
+	    		</c:otherwise>
+    		</c:choice>
+    	</c:route>
+    	
+    	<c:route id="rollByPullTableChangedNotifications" errorHandlerRef="defaultDeadLetterErrorHandler">
+    		<c:from uri="timer://tableChangedRoll?fixedRate=true&amp;period=5000000" />
+    		<c:transform>
+   				<c:groovy>
+   					body = NotifyMessageBucket.pull() 
+
+    			</c:groovy>
+   			</c:transform>
+   			<c:choice>
+    			<c:when>
+					<c:groovy >body== null</c:groovy>
+					<c:log message="NotifyMessageBucket.pull() == null" />
+	    		</c:when>
+	    		<c:otherwise>
+		    		<c:transform>
+	    				<c:groovy>
+	    					headers.CamelFileName = "data.json";
+   							body = Json.writeObjectToBytes(body);
+		    			</c:groovy>
+	    			</c:transform>
+					<c:marshal >
+						<c:zipFile />
+					</c:marshal>
+		    		<c:to  uri="activemq:topic:hosp-group01?requestTimeout=100000" />
+	    		</c:otherwise>
+    		</c:choice>			
+    	</c:route>
+    	
+    </c:camelContext>
+</beans>

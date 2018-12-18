@@ -1,0 +1,52 @@
+   simple-notify
+{
+  "@class" : "gyqx.txp.message.TxpMessage",
+  "kind" : "NotifyMessage",
+  "idempotentValue" : null,
+  "dataSyncVersion" : 2,
+  "dataSyncDatetime" : [ "java.util.Date", 1515146637558 ],
+  "fromId" : null,
+  "toId" : null,
+  "taskName" : "供应商信息下载",
+  "catalog" : "dataDownload",
+  "hasMoreData" : false,
+  "hasError" : false,
+  "description" : null,
+  "body" : null
+}
+
+
+hosp-group01_h0001
+{
+  "@class" : "gyqx.txp.message.TxpMessage",
+  "kind" : "NotifyMessage",
+  "idempotentValue" : null,
+  "dataSyncVersion" : 2,
+  "dataSyncDatetime" : [ "java.util.Date", 1515146637558 ],
+  "fromId" : null,
+  "toId" : 'h0001',
+  "taskName" : "n1",
+  "catalog" : "fileCompare",
+  "hasMoreData" : false,
+  "hasError" : false,
+  "script":'#<sql>\nselect * from bas_goods_info',
+  "description" : null,
+  "body" : null
+}
+
+{
+  "@class" : "gyqx.txp.message.TxpMessage",
+  "kind" : "NotifyMessage",
+  "idempotentValue" : null,
+  "dataSyncVersion" : 2,
+  "dataSyncDatetime" : [ "java.util.Date", 1515146637558 ],
+  "fromId" : null,
+  "toId" : 'h0001',
+  "taskName" : "n1",
+  "catalog" : "fileCompare",
+  "hasMoreData" : false,
+  "hasError" : false,
+  "script":'#<sql>\nselect * from bas_goods_info',
+  "description" : null,
+  "body" : null
+}

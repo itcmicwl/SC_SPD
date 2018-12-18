@@ -1,0 +1,18 @@
+sql.table.changed
+
+
+{"cmd":"sql.table.changed","context":null,"createDate":1511407393208,"method":"insert","tableName":"bas_area","sql":""}
+bas_mfrs_info
+{"cmd":"sql.table.changed","context":null,"createDate":1511407393208,"method":"insert","tableName":"bas_goods_info","sql":""}
+
+bas_goods_info
+purchase
+purconfirm
+distr_bill
+{"cmd":"sql.table.changed","context":null,"createDate":1511407393208,"method":"insert","tableName":"purconfirm","sql":""}
+
+{"cmd":"sql.table.changed","context":null,"createDate":1511407393208,"method":"insert",
+"tableName":"bas_company_info","sql":""}
+
+#<sql>
+select * from bas_goods_info

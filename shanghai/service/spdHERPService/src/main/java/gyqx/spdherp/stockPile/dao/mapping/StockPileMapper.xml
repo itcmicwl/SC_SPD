@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="gyqx.spdherp.stockPile.dao.mapper.IStockPileMapper" >
+    <resultMap id="StockPileHZVoResultMap" type="gyqx.spdherp.stockPile.vo.StockPileHZVo" >
+        <id column="hos_id" property="hosId" jdbcType="VARCHAR" />
+        <result column="stoc_id" property="stocId" jdbcType="VARCHAR" />
+        <result column="hos_goods_id" property="hosGoodsId" jdbcType="VARCHAR" />
+        <result column="goods_name" property="goodsName" jdbcType="VARCHAR" />
+        <result column="code" property="code" jdbcType="VARCHAR" />
+        <result column="goods_gg" property="goodsGg" jdbcType="VARCHAR" />
+        <result column="unit" property="unit" jdbcType="VARCHAR" />
+        <result column="qty" property="qty"  />
+        <result column="lockqty" property="lockqty"  />
+        <result column="price" property="price" />
+        <result column="je" property="je"  />
+        <result column="mfrs_id" property="mfrsId" jdbcType="VARCHAR" />
+        <result column="mfrs_name" property="mfrsName" jdbcType="INTEGER" />
+        <result column="prov_id" property="provId" jdbcType="VARCHAR" />
+        <result column="provname" property="provName" jdbcType="VARCHAR"/>
+        <result column="lbsx" property="lbsx" jdbcType="VARCHAR"/>
+    </resultMap>
+    <select id="listStockPileHZ" resultMap="StockPileHZVoResultMap">
+        SELECT
+			stockpile.hos_id,
+			stockpile.stoc_id,
+			stockpile.hos_goods_id,
+			stockpile.goods_name,
+			stockpile.`code`,
+			stockpile.goods_gg,
+			stockpile.unit,
+			qty,
+			lockqty,
+			stockpile.price,
+			je,
+			stockpile.mfrs_id,
+			stockpile.mfrs_name,
+			stockpile.prov_id,
+			provname
+		FROM
+			v_stockpile_hz stockpile
+		LEFT JOIN hos_goods_info goods ON goods.id = stockpile.hos_goods_id
+		LEFT JOIN hos_kindcode kindcode ON lbsx = kindcode.id        
+		<where>
+            <if test="hosId != '' and hosId!= null">
+                stockpile.hos_id = #{hosId}
+            </if>
+            <if test="stocId != '' and stocId!= null">
+                AND stoc_id = #{stocId}
+            </if>
+            <if test="provName != '' and provName!= null">
+                <bind name="provnameStr" value="'%'+provName+'%'"/>
+                AND provname LIKE #{provnameStr}
+            </if>
+            <if test="mfrsName != '' and mfrsName!= null">
+                <bind name="mfrsNameStr" value="'%'+mfrsName+'%'"/>
+                AND mfrs_name LIKE #{mfrsNameStr}
+            </if>
+            <if test="goodsName != '' and goodsName != null">
+                <bind name="goodsNameStr" value="'%'+goodsName+'%'"/>
+                AND 
+                (
+					stockpile.goods_name LIKE #{goodsNameStr} 
+					or goods.short_pinyin LIKE  #{goodsNameStr}
+                    or stockpile.goods_gg LIKE  #{goodsNameStr}
+				)
+            </if>
+            <if test="lbsx != '' and lbsx!= null">
+                <bind name="lbsxStr" value="lbsx+'%'"/>
+                AND (lbsx = #{lbsx} or p_id LIKE #{lbsxStr})
+            </if>
+        </where>
+    </select>
+
+</mapper>

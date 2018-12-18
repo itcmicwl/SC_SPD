@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="gyqx.mdqc.mycerts.dao.mapper.ViewJxsqsMapper">
+    <select id="listProvGoodsInfo" resultType="gyqx.mdqc.mycerts.vo.GoodsInfoVo">
+        SELECT pgi.id, pgi.goods_name, pgi.goods_gg, mfrs.cname AS mfrs_name,
+               bgi.certificate_code, pgi.spd_goods_code, pgi.erp_code, pjg.num AS trackable
+        FROM prov_goods_info pgi
+        LEFT OUTER JOIN bas_company_info mfrs ON pgi.mfrs_id = mfrs.id
+        LEFT OUTER JOIN bas_goods_info bgi ON pgi.spd_goods_code = bgi.id
+        <choose>
+            <when test="hosId != null and hosId != ''">
+                INNER JOIN hos_goods_info hgi ON bgi.code = hgi.spd_goods_code AND hgi.hos_id = #{hosId} AND hgi.prov_id = #{provId}
+                LEFT OUTER JOIN (SELECT COUNT(0) AS num, goods_id FROM prov_jxsqs_goods pjg
+                  INNER JOIN prov_jxsqs_hos pjh
+                  ON pjg.sqs_id = pjh.sqs_id WHERE pjg.prov_id = #{provId} AND pjh.hos_id = #{hosId}
+                GROUP BY goods_id) pjg ON pjg.goods_id = pgi.spd_goods_code
+            </when>
+            <otherwise>
+                LEFT OUTER JOIN (SELECT COUNT(0) AS num, goods_id FROM prov_jxsqs_goods
+                  WHERE prov_id = #{provId} GROUP BY goods_id) pjg ON pjg.goods_id = pgi.spd_goods_code
+            </otherwise>
+        </choose>
+        <where>
+            pgi.prov_id = #{provId} AND pgi.flag = 1
+            <if test="input != null and input != ''">
+                <bind name="input_bind" value="'%'+input+'%'"/>
+                AND (pgi.goods_name LIKE #{input_bind} OR pgi.short_pinyin LIKE #{input_bind})
+            </if>
+            <if test="mfrsId != null and mfrsId != ''">
+                AND pgi.mfrs_id = #{mfrsId}
+            </if>
+        </where>
+        ORDER BY pgi.goods_name, pgi.mfrs_id
+    </select>
+    <select id="listHosGoodsInfo" resultType="gyqx.mdqc.mycerts.vo.GoodsInfoVo">
+        SELECT  hgi.id,
+                hgi.goods_name,
+                hgi.goods_gg,
+                mfrs.cname AS mfrs_name,
+                bgi.certificate_code,
+                bgi.id     AS spd_goods_code,
+                prov.cname AS prov_name,
+                pjgs.num   AS trackable
+        FROM hos_goods_info hgi
+                LEFT OUTER JOIN bas_company_info mfrs ON hgi.mfrs_id = mfrs.id
+                LEFT OUTER JOIN bas_company_info prov ON hgi.prov_id = prov.id
+                LEFT OUTER JOIN bas_goods_info bgi ON hgi.spd_goods_code = bgi.code
+                LEFT OUTER JOIN (SELECT COUNT(0) AS NUM, pjg.GOODS_ID
+                                FROM prov_jxsqs_hos pjh
+                                    LEFT OUTER JOIN prov_jxsqs_goods pjg ON pjh.SQS_ID = pjg.SQS_ID
+                                WHERE pjh.HOS_ID = #{hosId}
+                                GROUP BY pjg.GOODS_ID) pjgs ON pjgs.GOODS_ID = bgi.ID
+        <where>
+            hgi.hos_id = #{hosId} AND hgi.flag = 1
+            <if test="input != null and input != ''">
+                <bind name="input_bind" value="'%'+input+'%'"/>
+                AND (hgi.goods_name LIKE #{input_bind} OR hgi.short_pinyin LIKE #{input_bind})
+            </if>
+            <if test="mfrsId != null and mfrsId != ''">
+                AND hgi.mfrs_id = #{mfrsId}
+            </if>
+        </where>
+        ORDER BY hgi.goods_name, hgi.mfrs_id
+    </select>
+    <select id="getHosJxsqsDataList" resultType="gyqx.mdqc.mycerts.vo.JxsqsData">
+        SELECT
+           pjg.ID, pjg.SQS_ID, pjg.PROV_ID, pjg.CHIEF_ID, pjg.SQS_LASTLEVEL_ID, pj.SALE_AREA, pj.FILE_PATH, pj.IS_MFRS,
+           pj.IS_VALIDING, pj.EXPDT_BEGIN_DATE, pj.EXPDT_END_DATE, bci.CNAME AS CHIEF_NAME, pbci.CNAME AS PROV_NAME
+        FROM
+             prov_jxsqs_goods pjg
+                 LEFT OUTER JOIN prov_jxsqs pj ON pjg.sqs_id = pj.id
+                 LEFT OUTER JOIN bas_company_info pbci ON pjg.PROV_ID = pbci.ID
+                 LEFT OUTER JOIN bas_company_info bci ON pjg.CHIEF_ID = bci.ID
+        WHERE pjg.goods_id = #{goodsId}
+        CONNECT BY PRIOR pjg.chief_id = pjg.prov_id AND PRIOR pjg.goods_id = pjg.goods_id
+                AND PRIOR pjg.SQS_LASTLEVEL_ID = pjg.sqs_id
+        START WITH pjg.goods_id = #{goodsId} AND pjg.sqs_id IN
+        <foreach collection="sqsIds" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
+    <select id="getProvJxsqsDataList" resultType="gyqx.mdqc.mycerts.vo.JxsqsData">
+        SELECT
+            pjg.ID, pjg.SQS_ID, pjg.PROV_ID, pjg.CHIEF_ID, pjg.SQS_LASTLEVEL_ID, pj.SALE_AREA, pj.FILE_PATH, pj.IS_MFRS,
+            pj.IS_VALIDING, pj.EXPDT_BEGIN_DATE, pj.EXPDT_END_DATE, bci.CNAME AS CHIEF_NAME, pbci.CNAME AS PROV_NAME
+        FROM
+             PROV_JXSQS_GOODS pjg
+                LEFT OUTER JOIN prov_jxsqs pj ON pjg.sqs_id = pj.id
+                <if test="hosId != null and hosId !=''">
+                    LEFT OUTER JOIN prov_jxsqs_hos pjh ON pj.id = pjh.sqs_id
+                </if>
+                LEFT OUTER JOIN bas_company_info pbci ON pjg.PROV_ID = pbci.ID
+                LEFT OUTER JOIN bas_company_info bci ON pjg.CHIEF_ID = bci.ID
+        WHERE pjg.goods_id = #{goodsId}
+        CONNECT BY PRIOR pjg.chief_id = pjg.prov_id AND PRIOR pjg.goods_id = pjg.goods_id
+                AND PRIOR pjg.SQS_LASTLEVEL_ID = pjg.sqs_id
+        START WITH pjg.goods_id = #{goodsId}
+        AND pjg.prov_id = #{corpId}
+        <if test="hosId != null and hosId != ''">
+            AND pjh.hos_id = #{hosId}
+        </if>
+    </select>
+    <select id="getProvSqsHos" resultType="gyqx.mdqc.mycerts.vo.IdNameVo">
+        SELECT pjh.SQS_ID AS ID, bci.CNAME AS NAME
+        FROM
+             PROV_JXSQS_HOS pjh
+        LEFT OUTER JOIN BAS_COMPANY_INFO bci ON pjh.HOS_ID = bci.ID AND bci.KIND = '1'
+        WHERE
+            pjh.PROV_ID = #{corpId} AND pjh.SQS_ID IN
+        <foreach collection="sqsIds" item="item" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+    </select>
+    <select id="getHosSqsHos" resultType="gyqx.mdqc.mycerts.vo.IdNameVo">
+        SELECT pjh.SQS_ID AS ID, bci.CNAME AS NAME
+        FROM
+            PROV_JXSQS_HOS pjh
+        LEFT OUTER JOIN BAS_COMPANY_INFO bci ON pjh.PROV_ID = bci.ID
+        WHERE
+            pjh.HOS_ID = #{corpId} AND pjh.SQS_ID IN
+        <foreach collection="sqsIds" item="item" separator="," open="(" close=")">
+            #{item}
+        </foreach>
+    </select>
+
+</mapper>

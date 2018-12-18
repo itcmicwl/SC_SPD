@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="
+	http://www.springframework.org/schema/context 
+	http://www.springframework.org/schema/context/spring-context-4.0.xsd
+    http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+    http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+    http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd">
+	
+    <bean id="localConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+		<property name="brokerURL" value="tcp://127.0.0.1:61616"/>
+		<property name="userName" value="admin" />
+		<property name="password" value="admin" /> 
+		<property name="maxThreadPoolSize" value="8"/>
+	</bean>
+	
+	<bean id="localPooledConnectionFactory" class="org.apache.activemq.pool.PooledConnectionFactory">  
+	    <property name="connectionFactory" ref="localConnectionFactory"/>  
+	    <property name="maxConnections" value="32"/>  
+	    
+	</bean> 
+	
+	<bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+        <property name="connectionFactory" ref="localPooledConnectionFactory" />
+        <property name="explicitQosEnabled" value="true"></property>
+<!--         <property name="timeToLive" value="604800000" /> 7*24*3600*1000 -->
+        <property name="timeToLive" value="1000000" />
+    </bean>
+    
+<!--     <bean class="common.utils.jms.JMSSender"> -->
+<!--     	<constructor-arg > -->
+<!--     		<ref bean="jmsTemplate"/> -->
+<!--     	</constructor-arg>     -->
+<!--     </bean> -->
+
+</beans>

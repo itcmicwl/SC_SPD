@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 引入接口，只要实现接口的方法就会调用对应接口方法的 select id -->
+<mapper namespace="gyqx.platform.sys.dao.mapper.SysModuleGroupMapper"> 
+<!-- parameterType传入参数类型     resultMap=自己定义的一个返回类型     resultType返回类型 -->
+
+
+	
+<select id="queryModuleGroupVoList" resultMap="moduleGroupVoResult">
+    select p.ename as projectEname,p.code as projectCode,p.cname as projectCname, m.* from (sys_module_group m JOIN sys_project p on m.project_code=p.code )
+
+	 
+		<where>
+		   <if test='ename != null and ename!=""'>
+		       <bind name="ename" value="'%' + ename + '%'" />
+		     and    m.ename  LIKE #{ename}  
+		    </if>
+		    <if test='cname != null and cname!=""'>
+		       <bind name="cname" value="'%' + cname + '%'" />
+		     and    m.cname  LIKE #{cname}  
+		    </if>
+		   
+		    <if test="projectCode != null">
+		     and    m.project_code = #{projectCode}  
+		    </if>  
+		    
+		</where>
+		 ORDER BY m.ordinal,m.id 
+</select>
+
+
+
+
+	
+	
+    <resultMap type="gyqx.platform.sys.vo.SysModuleGroupVo" id="moduleGroupVoResult">
+		<id property="id" column="id"/>
+	    <result property="projectId"  column="project_id"/>
+	    <result property="projectCode"  column="projectCode"/>
+		<result property="ordinal"  column="ordinal"/>
+		<result property="ename"  column="ename"/> 
+		<result property="cname"  column="cname"/>  
+		<result property="remark"  column="remark"/> 
+		<result property="uid"  column="uxid"/>
+		<result property="mt"  column="mt"/>
+	    <result property="version"  column="version"/>
+	    <result property="projectCname"  column="projectCname"/>	
+	    <result property="projectEname"  column="projectEname"/>	   
+	</resultMap>
+	
+	
+	
+
+	
+</mapper>

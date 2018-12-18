@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="gyqx.platform.sys.dao.mapper.ISysModuleFunctionMapper">
+	<sql id="baseSelect">
+		select t.id,t.module_id
+		moduleId,t.code,t.ename,t.cname,t.remark,t.uxid,t.mt,t.version,m.cname
+		mName,dv.id gId,dv.ename gName,sp.code spCode,sp.ename spName
+		from
+		sys_module_function t left join sys_module m on t.module_id = m.id
+		LEFT JOIN sys_dict_value dv on m.group_id = dv.dict_id
+		LEFT JOIN sys_project sp on m.project_code=sp.code
+	</sql>
+	<select id="getSysModuleFunctionVoList" resultType="gyqx.platform.sys.vo.SysModuleFunctionVo"
+		parameterType="gyqx.platform.sys.vo.SysModuleFunctionVo">
+		<include refid="baseSelect" />
+		<where>
+			<if test='ename != null and ename !=""'>
+				<bind name="ename_bind" value="'%'+ename+'%'"/>
+				and t.ename like #{ename_bind}
+			</if>
+			<if test='code != null and code !=""'>
+				<bind name="code_bind" value="'%'+code+'%'"/>
+				and t.code like #{code_bind}
+			</if>
+			<if test='moduleId != null and moduleId !=""'>
+				and t.module_id = #{moduleId}
+			</if>
+			<if test='spCode != null and spCode !=""'>
+				<bind name="spCode_bind" value="'%'+spCode+'%'"/>
+				and sp.code like #{spCode}
+			</if>
+		</where>
+	</select>
+	<select id="getSysModuleFunctionVoByid" resultType="gyqx.platform.sys.vo.SysModuleFunctionVo">
+		<include refid="baseSelect" />
+		<where>
+			t.id = #{id}
+		</where>
+	</select>
+	<select id="existCodeInSys" resultType="java.lang.Integer">
+		select count(*) from sys_module_function t
+		<where>
+			t.code =#{code}
+			<if test='id != null and id !=""'>
+				and t.id  <![CDATA[<>]]>
+				#{id}
+			</if>
+		</where>
+	</select>
+	<select id="existNameInModule" resultType="java.lang.Integer">
+		select count(*) from sys_module_function t
+		<where>
+			t.ename =#{ename} and t.module_id = #{moduleId}
+			<if test='id != null and id !=""'>
+				and t.id  <![CDATA[<>]]>
+				#{id}
+			</if>
+		</where>
+	</select>
+	<insert id="inset" parameterType="gyqx.platform.sys.vo.SysModuleFunctionVo">
+		INSERT INTO
+		sys_module_function (id,module_id,code,ename,cname,remark,uxid,mt,version)
+		 VALUES (#{id},#{moduleId},#{code}, #{ename},
+		#{cname},#{remark}, #{uid},
+		<if test="_databaseId == 'oracle'">
+			sysdate,
+		</if>
+		<if test="_databaseId == 'mysql'">
+			sysdate(),
+		</if>
+		0)
+	</insert>
+	<update id="setSysModuleFunction" parameterType="gyqx.platform.sys.vo.SysModuleFunctionVo">
+		update sys_module_function set
+		<if test='moduleId != null and moduleId !=""'>
+			module_id = #{moduleId} ,
+		</if>
+		<if test='code != null and code !=""'>
+			code = #{code} ,
+		</if>
+		<if test='ename != null and ename !=""'>
+			ename = #{ename} ,
+		</if>
+		<if test='cname != null and cname !=""'>
+			cname = #{cname},
+		</if>
+		<if test='remark != null and remark !=""'>
+			remark = #{remark},
+		</if>
+		<if test='uid != null and uid !=""'>
+			uxid = #{uid},
+		</if>
+		version = version+1,
+		mt = #{mt}
+		where id=#{id}
+	</update>
+	<delete id="delSysModuleFunction">
+		DELETE FROM sys_module_function WHERE id=#{id}
+	</delete>
+</mapper>

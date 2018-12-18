@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="gyqx.spdhdi.orderMgr.dao.mapper.IReceiveBillListVoMapper"> 
+
+	<select id="list"  resultMap="receiveBillListVoMap" parameterType="gyqx.spdhdi.orderMgr.vo.ReceiveBillListVo">
+		<![CDATA[
+		select 
+			rbl.id,
+			rbl.pid,
+			rbl.bill_id as billId ,
+			rbl.row_number as rowNumber,
+			rbl.pur_bill_id as purBillId,
+			rbl.pur_bill_date as purBillDate,
+			rbl.apply_bill_id as applyBillId,
+			rbl.sale_bill_id as saleBillId,
+			rbl.prov_goods_id as provGoodsId,
+			rbl.goods_gg as goodsGg,
+			rbl.goods_mrfs_id as goodsMrfsId,
+			mfs.mfrs_name as mfrsName,
+			rbl.made,
+			rbl.hos_goods_id as hosGoodsId,
+			rbl.hos_goods_code as hosGoodsCode,
+			rbl.hos_goods_name as hosGoodsName,
+			rbl.is_unique_code as isUniqueCode,
+			rbl.batch_num as batchNum,
+			rbl.batch_code as batchCode,
+			rbl.sterilization_end_date as sterilizationEndDate,
+			rbl.sterilization_date as sterilizationDate,
+			rbl.expdt_end_date as expdtEndDate,
+			rbl.product_date as productDate,
+			rbl.unrecieve_qty as unrecieveQty,
+			rbl.qty,
+			rbl.price,
+			rbl.revieve_result as revieveResult,
+			rbl.sum_rows as sumRows,
+			rbl.status,
+			rbl.memo,
+			rbl.version
+			from receive_bill_list rbl  
+			left join bas_mfrs_info mfs on  mfs.id= rbl.goods_mrfs_id
+		]]>
+		<where>		
+			1=1
+			<if test='pid != null and pid !=""'>
+				and rbl.pid =#{pid}
+			</if>
+			<if test='billId != null and billId !=""'>
+				and rbl.bill_id =#{billId}
+			</if>
+		</where>
+	</select>
+ 	<resultMap type="gyqx.spdhdi.orderMgr.vo.ReceiveBillListVo" id="receiveBillListVoMap">
+		<result property="id"  column="id"/>
+		<result property="pid"  column="pid"/>
+		<result property="billId"  column="billId"/>
+		<result property="rowNumber"  column="rowNumber"/>
+		<result property="purBillId"  column="purBillId"/>
+		<result property="purBillDate"  column="purBillDate"/>
+		<result property="applyBillId"  column="applyBillId"/>
+		<result property="saleBillId"  column="saleBillId"/>
+		<result property="provGoodsId"  column="provGoodsId"/>
+		<result property="goodsGg"  column="goodsGg"/>
+		<result property="goodsMrfsId"  column="goodsMrfsId"/>
+		<result property="mfrsName"  column="mfrsName"/>
+		<result property="made"  column="made"/>
+		<result property="hosGoodsId"  column="hosGoodsId"/>
+		<result property="hosGoodsCode"  column="hosGoodsCode"/>
+		<result property="hosGoodsName"  column="hosGoodsName"/>
+		<result property="isUniqueCode"  column="isUniqueCode"/>
+		<result property="batchNum"  column="batchNum"/>
+	    <result property="batchCode"  column="batchCode"/>
+		<result property="sterilizationEndDate"  column="sterilizationEndDate"/>
+		<result property="sterilizationDate"  column="sterilizationDate"/>
+		<result property="expdtEndDate"  column="expdtEndDate"/>
+		<result property="productDate"  column="productDate"/>
+		<result property="unrecieveQty"  column="unrecieveQty"/>
+		<result property="qty"  column="qty"/>
+		<result property="price"  column="price"/>
+		<result property="revieveResult"  column="revieveResult"/>
+		<result property="sumRows"  column="sumRows"/>
+		<result property="status"  column="status"/>
+		<result property="memo"  column="memo"/>
+		<result property="version"  column="version"/>
+	</resultMap> 	
+	
+</mapper>

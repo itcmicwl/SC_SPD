@@ -1,0 +1,4 @@
+select a.*,b.id,b.cname ,sum( a.id) as fsum, a.ename + b.ename as two from sys_atom a 
+LEFT JOIN sys_bean b on a.id = b.id 
+where a.id = ? and b.ename=? and b.cname like ?
+and exists ( select * from sys_user where id=0 )

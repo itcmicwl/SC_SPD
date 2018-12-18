@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="gyqx.spdhdi.baseData.dao.mapper.IHosKindcodeMapper"> 
+<!-- parameterType传入参数类型     resultMap=自己定义的一个返回类型     resultType返回类型 -->
+	<select id="list"  resultMap="hosKindcodeMap" parameterType="gyqx.spdhdi.po.HosKindcode">
+		<![CDATA[
+		select id,hos_id,p_id,kind_name,level_code,version from hos_kindcode
+		]]>
+		<where>
+			1=1  and  p_id  is null
+			<if test='hosId != null and hosId !=""'>
+			
+				and hos_id =  #{hosId}   
+			</if>
+			order by id
+		</where>
+	</select>
+ 	<resultMap type="gyqx.spdhdi.po.HosKindcode" id="hosKindcodeMap">
+		<id property="id" column="id"/>
+		<result property="hosId"  column="hos_id"/>
+		<result property="pId"  column="p_id"/>
+		<result property="kindName"  column="kind_name"/>
+		<result property="levelCode"  column="level_code"/>
+		<result property="version"  column="version"/>
+	</resultMap> 
+	
+	<update id="update" parameterType="gyqx.spdhdi.po.HosKindcode" >
+		update hos_kindcode
+		<set>
+			<if test='hosId != null'>  
+				hos_id = #{hosId},
+			</if> 
+			<if test='pId != null'>  
+				p_id = #{pId},
+			</if> 
+			<if test='kindName != null'>  
+				kind_name = #{kindName},
+			</if> 
+			<if test='levelCode != null'>  
+				level_code = #{levelCode},
+			</if> 
+			version=version+1,
+		</set>
+		<where>
+			and id = #{id}
+			and version= #{version}
+		</where>
+	</update>
+</mapper>

@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="gyqx.mdqc.mycerts.dao.mapper.CertAlertMapper">
+
+    <!-- 医院用户登录时获取产品注册证 -->
+    <select id="listRegCertByHos" resultMap="RegistrationInfoVoResultMap">
+        select
+        reg.*, comp.cname as mfrsName
+        from bas_registration_info reg
+        left join bas_company_info comp on reg.mfrs_id = comp.id
+        where reg.certificate_code in (
+        select distinct goods.certificate_code from hos_goods_info hg
+        left JOIN bas_goods_info goods on hg.spd_goods_code = goods.code
+        where hg.hos_id= #{hosId})
+        and (comp.kind='3' or comp.kind='4')
+
+        <if test="isOld != null and isOld !=''">
+            and reg.is_old_info = #{isOld}
+        </if>
+
+        <if test="start != null and end != null and start gte end">
+            and reg.expdt_end_date <![CDATA[ <= ]]> #{end}
+        </if>
+        <if test="start != null and end != null and start lt end">
+            and reg.expdt_end_date <![CDATA[ <= ]]> #{end} and  reg.expdt_end_date <![CDATA[ > ]]>  #{start}
+        </if>
+        <if test="aboutName != null and aboutName !=''">
+            <bind name="searchName" value="'%' + aboutName + '%'" />
+            and (reg.product_name like #{searchName} or reg.certificate_code like #{searchName} or comp.cname like #{searchName}  )
+        </if>
+        order by comp.cname,reg.product_name
+    </select>
+
+    <!-- 集配商用户登录时获取产品注册证 -->
+    <select id="listRegCertByProv" resultMap="provRegistrationInfoVoResultMap">
+        select reg.id, reg.prov_id, reg.reg_kind, reg.product_name, reg.certificate_code,
+        reg.mfrs_id, reg.expdt_begin_date, reg.expdt_end_date, reg.is_old_info,
+        comp.cname as mfrsName
+        from prov_registration_info reg
+        left join bas_company_info comp on reg.mfrs_id = comp.id
+        where
+        reg.prov_id= #{provId}
+        <if test="isOld != null and isOld !=''">
+            and reg.is_old_info = #{isOld}
+        </if>
+        and (comp.kind='3' or comp.kind='4')
+        <if test="start != null and end != null and start gte end">
+            and reg.expdt_end_date <![CDATA[ <= ]]> #{end}
+        </if>
+        <if test="start != null and end != null and start lt end">
+            and reg.expdt_end_date <![CDATA[ <= ]]> #{end} and  reg.expdt_end_date <![CDATA[ > ]]>  #{start}
+        </if>
+        <if test="aboutName != null and aboutName !=''">
+            <bind name="searchName" value="'%' + aboutName + '%'" />
+            and (reg.product_name like #{searchName} or reg.certificate_code like #{searchName} or comp.cname like #{searchName}  )
+        </if>
+        order by comp.cname,reg.product_name
+    </select>
+
+    <!-- 厂商用户登录时，获取本厂商的产品注册证 -->
+    <select id="listRegCertByMfrs" resultMap="RegistrationInfoVoResultMap">
+        select
+        reg.*, comp.cname as mfrsName
+        from bas_registration_info reg
+        left join bas_company_info comp on reg.mfrs_id = comp.id
+        where reg.mfrs_id= #{mfrsId}
+        and (comp.kind='3' or comp.kind='4')
+        and comp.flag = '1'
+        <if test="isOld != null and isOld !=''">
+            and reg.is_old_info = #{isOld}
+        </if>
+        <if test="start != null and end != null and start gte end">
+            and reg.expdt_end_date <![CDATA[ <= ]]> #{end}
+        </if>
+        <if test="start != null and end != null and start lt end">
+            and reg.expdt_end_date <![CDATA[ <= ]]> #{end} and  reg.expdt_end_date <![CDATA[ > ]]>  #{start}
+        </if>
+        <if test="aboutName != null and aboutName !=''">
+            <bind name="searchName" value="'%' + aboutName + '%'" />
+            and (reg.product_name like #{searchName} or reg.certificate_code like #{searchName} or comp.cname like #{searchName}  )
+        </if>
+        order by comp.cname,reg.product_name
+    </select>
+
+    <!-- 供应商用户登录时，获取关联的经销授权书 -->
+    <select id="listSqsByProv" resultType="gyqx.mdqc.mycerts.vo.JxsqsData">
+        SELECT
+        distinct pj.ID, pj.SALE_AREA, pj.FILE_PATH, pj.IS_MFRS,
+        pj.IS_VALIDING, pj.EXPDT_BEGIN_DATE, pj.EXPDT_END_DATE, bci.CNAME AS CHIEF_NAME, pbci.CNAME AS PROV_NAME
+        FROM
+        prov_jxsqs pj
+        LEFT OUTER JOIN PROV_JXSQS_GOODS pjg ON pjg.sqs_id = pj.id
+        LEFT OUTER JOIN bas_company_info pbci ON pjg.PROV_ID = pbci.ID
+        LEFT OUTER JOIN bas_company_info bci ON pjg.CHIEF_ID = bci.ID
+        <trim prefix="WHERE" prefixOverrides="AND |OR ">
+
+            <if test="start != null and end != null and start gte end">
+                and pj.expdt_end_date <![CDATA[ <= ]]> #{end}
+            </if>
+            <if test="start != null and end != null and start lt end">
+                and pj.expdt_end_date <![CDATA[ <= ]]> #{end} and  pj.expdt_end_date <![CDATA[ > ]]>  #{start}
+            </if>
+            <if test="aboutName != null and aboutName !=''">
+                <bind name="searchName" value="'%' + aboutName + '%'" />
+                and (pbci.CNAME like #{searchName} or bci.CNAME like #{searchName} or pj.SALE_AREA like #{searchName}  )
+            </if>
+        </trim>
+
+        CONNECT BY PRIOR pjg.chief_id = pjg.prov_id AND PRIOR pjg.goods_id = pjg.goods_id
+        AND PRIOR pjg.SQS_LASTLEVEL_ID = pjg.sqs_id
+        START WITH pj.prov_id = #{provId}
+
+        order by pbci.CNAME, bci.CNAME
+    </select>
+
+    <!-- 医院用户登录时，获取关联的经销授权书 -->
+    <select id="listSqsByHos" resultType="gyqx.mdqc.mycerts.vo.JxsqsData">
+        SELECT
+        distinct pj.ID, pj.SALE_AREA, pj.FILE_PATH, pj.IS_MFRS,
+        pj.IS_VALIDING, pj.EXPDT_BEGIN_DATE, pj.EXPDT_END_DATE, bci.CNAME AS CHIEF_NAME, pbci.CNAME AS PROV_NAME
+        FROM
+        prov_jxsqs pj
+        LEFT OUTER JOIN PROV_JXSQS_GOODS pjg ON pjg.sqs_id = pj.id
+        LEFT OUTER JOIN PROV_JXSQS_HOS pjh on pj.id = pjh.sqs_id
+        LEFT OUTER JOIN bas_company_info pbci ON pjg.PROV_ID = pbci.ID
+        LEFT OUTER JOIN bas_company_info bci ON pjg.CHIEF_ID = bci.ID
+        <trim prefix="WHERE" prefixOverrides="AND |OR ">
+
+            <if test="start != null and end != null and start gte end">
+                and pj.expdt_end_date <![CDATA[ <= ]]> #{end}
+            </if>
+            <if test="start != null and end != null and start lt end">
+                and pj.expdt_end_date <![CDATA[ <= ]]> #{end} and  pj.expdt_end_date <![CDATA[ > ]]>  #{start}
+            </if>
+            <if test="aboutName != null and aboutName !=''">
+                <bind name="searchName" value="'%' + aboutName + '%'" />
+                and (pbci.CNAME like #{searchName} or bci.CNAME like #{searchName} or pj.SALE_AREA like #{searchName}  )
+            </if>
+        </trim>
+        CONNECT BY PRIOR pjg.chief_id = pjg.prov_id AND PRIOR pjg.goods_id = pjg.goods_id
+        AND PRIOR pjg.SQS_LASTLEVEL_ID = pjg.sqs_id
+        START WITH pjh.hos_id = #{hosId}
+
+        order by pbci.CNAME, bci.CNAME
+    </select>
+
+    <!-- 厂商用户登录时，获取对应的经销授权书 -->
+    <select id="listSqsByMfrs" resultType="gyqx.mdqc.mycerts.vo.JxsqsData">
+        SELECT
+        distinct pj.ID, pj.SALE_AREA, pj.FILE_PATH, pj.IS_MFRS,
+        pj.IS_VALIDING, pj.EXPDT_BEGIN_DATE, pj.EXPDT_END_DATE, bci.CNAME AS CHIEF_NAME, pbci.CNAME AS PROV_NAME
+        FROM
+        prov_jxsqs pj
+        LEFT OUTER JOIN bas_company_info pbci ON pj.PROV_ID = pbci.ID
+        LEFT OUTER JOIN bas_company_info bci ON pj.CHIEF_ID = bci.ID
+        where PJ.IS_MFRS = '1'
+        and PJ.CHIEF_ID = #{mfrsId}
+        <if test="start != null and end != null and start gte end">
+            and pj.expdt_end_date <![CDATA[ <= ]]> #{end}
+        </if>
+        <if test="start != null and end != null and start lt end">
+            and pj.expdt_end_date <![CDATA[ <= ]]> #{end} and  pj.expdt_end_date <![CDATA[ > ]]>  #{start}
+        </if>
+        <if test="aboutName != null and aboutName !=''">
+            <bind name="searchName" value="'%' + aboutName + '%'" />
+            and (pbci.CNAME like #{searchName} or pj.SALE_AREA like #{searchName}  )
+        </if>
+    </select>
+
+    <resultMap id="RegistrationInfoVoResultMap" type="gyqx.mdqc.mycerts.vo.BasRegistrationInfoVo">
+        <id column="id" property="id"/>
+        <result column="mfrsName" property="mfrsName" />
+        <result column="mfrs_id" property="mfrsId" />
+        <result column="certificate_code" property="certificateCode" />
+        <result column="product_name" property="productName" />
+        <result column="reg_kind" property="regKind" />
+        <result column="expdt_begin_date" property="expdtBeginDate" />
+        <result column="expdt_end_date" property="expdtEndDate" />
+        <result column="is_old_info" property="isOldInfo" />
+        <collection property="fileList" column="id" ofType="gyqx.mdqc.mycerts.vo.BasRegistrationImageVo" select="findBasFilePathListByCertificateId" >
+            <id property="certificateId" column="certificateId"/>
+            <id property="filePath" column="filePath"/>
+        </collection>
+    </resultMap>
+
+    <!-- 根据产品注册证基表id，获取产品注册证证照图片路径 -->
+    <select id="findBasFilePathListByCertificateId" resultType="gyqx.mdqc.mycerts.vo.BasRegistrationImageVo">
+        SELECT
+            certificate_id as certificateId,
+            file_path as filePath
+        FROM
+            bas_registration_image
+        where
+            CERTIFICATE_ID = #{id}
+    </select>
+
+    <resultMap id="provRegistrationInfoVoResultMap" type="gyqx.mdqc.mycerts.vo.BasRegistrationInfoVo">
+        <id column="id" property="id"/>
+        <result column="mfrsName" property="mfrsName" />
+        <result column="mfrs_id" property="mfrsId" />
+        <result column="certificate_code" property="certificateCode" />
+        <result column="product_name" property="productName" />
+        <result column="reg_kind" property="regKind" />
+        <result column="expdt_begin_date" property="expdtBeginDate" />
+        <result column="expdt_end_date" property="expdtEndDate" />
+        <result column="is_old_info" property="isOldInfo" />
+        <collection property="fileList" column="id" ofType="gyqx.mdqc.mycerts.vo.BasRegistrationImageVo" select="findProvFilePathListByCertificateId" >
+            <id property="certificateId" column="certificateId"/>
+            <id property="filePath" column="filePath"/>
+        </collection>
+    </resultMap>
+
+    <!-- 根据供应商注册证表id，获取供应商证照路径 -->
+    <select id="findProvFilePathListByCertificateId" resultType="gyqx.mdqc.mycerts.vo.BasRegistrationImageVo">
+        SELECT
+            CERTIFICATE_ID as certificateId,
+            file_path as filePath
+        FROM
+            prov_registration_image
+        where
+            CERTIFICATE_ID = #{id}
+    </select>
+
+    <!-- 用户登录时，获取本企业证照及图片信息 -->
+    <select id="listCompCertById" resultMap="companyCertificateVo">
+        SELECT
+        cert.*, comp.cname as companyName
+        from bas_company_certificate cert
+        left join bas_company_info comp on cert.company_id = comp.id
+        where
+        cert.company_id = #{compId}
+        and comp.flag = '1'
+        <if test="start != null and end != null and start gte end">
+            and cert.expdt_end_date <![CDATA[ <= ]]> #{end}
+        </if>
+        <if test="start != null and end != null and start lt end">
+            and cert.expdt_end_date <![CDATA[ <= ]]> #{end} and  cert.expdt_end_date <![CDATA[ > ]]>  #{start}
+        </if>
+        <if test="aboutName != '' and aboutName != null">
+            <bind name="searchName" value="'%'+aboutName+'%'"/>
+            and (comp.cname like #{searchName})
+        </if>
+        order by comp.cname,cert.cert_kind
+
+    </select>
+
+    <!-- 医院用户登录时，获取医院集配商证照及图片信息 -->
+    <select id="listProvCertByHos" resultMap="companyCertificateVo">
+        select
+        cert.*, comp.cname as companyName
+        from bas_company_certificate cert
+        left join bas_company_info comp on cert.company_id = comp.id
+        where cert.company_id in (
+        select distinct hg.prov_id from hos_goods_info hg
+        where hg.hos_id=#{hosId})
+        and (comp.kind='2' or comp.kind='4')
+        and comp.flag = '1'
+
+        <if test="start != null and end != null and start gte end">
+            and cert.expdt_end_date <![CDATA[ <= ]]> #{end}
+        </if>
+        <if test="start != null and end != null and start lt end">
+            and cert.expdt_end_date <![CDATA[ <= ]]> #{end} and  cert.expdt_end_date <![CDATA[ > ]]>  #{start}
+        </if>
+        <if test="aboutName != '' and aboutName != null">
+            <bind name="searchName" value="'%'+aboutName+'%'"/>
+            and (comp.cname like #{searchName})
+        </if>
+        order by comp.cname,cert.cert_kind
+    </select>
+
+    <!-- 集配商用户登录时，获取合作供应商证照及图片信息 -->
+    <select id="listProvCertByProv" resultMap="collectorProvCertificateVo">
+        select
+        distinct cert.id,cert.prov_id as company_id,cert.cert_kind ,
+        cert.cert_code, cert.expdt_begin_date, cert.expdt_end_date, cert.is_validing,
+        comp.cname as companyName
+        from collector_prov_certificate cert
+        left join collector_prov_cert col on cert.p_id = col.id
+        left join bas_company_info comp on col.prov_id = comp.id
+        where col.collector_id = #{compId}
+        and col.flag = '1'
+        and (comp.kind='2' or comp.kind='4')
+
+        <if test="start != null and end != null and start gte end">
+            and cert.expdt_end_date <![CDATA[ <= ]]> #{end}
+        </if>
+        <if test="start != null and end != null and start lt end">
+            and cert.expdt_end_date <![CDATA[ <= ]]> #{end} and  cert.expdt_end_date <![CDATA[ > ]]>  #{start}
+        </if>
+        <if test="aboutName != '' and aboutName != null">
+            <bind name="searchName" value="'%'+aboutName+'%'"/>
+            and (comp.cname like #{searchName})
+        </if>
+        order by comp.cname,cert.cert_kind
+    </select>
+
+    <resultMap type="gyqx.spdhdi.myInfos.vo.CompanyCertificateVo" id="collectorProvCertificateVo">
+        <id property="id" column="id"/>
+        <id property="companyId" column="company_id"/>
+        <id property="companyName" column="companyName"/>
+        <result property="certKind"  column="cert_kind"/>
+        <result property="certCode"  column="cert_code"/>
+        <result property="expdtBeginDate"  column="expdt_begin_date"/>
+        <result property="expdtEndDate"  column="expdt_end_date"/>
+        <result property="isValiding"  column="is_validing"/>
+        <result property="uid" column="uxid"/>
+        <result property="fillDate" column="fill_date"/>
+        <result property="lastUpdateDatetime" column="last_update_datetime"/>
+        <result property="version" column="version"/>
+        <collection property="basCompanyCertificateImages" column="id" ofType="gyqx.spdhdi.po.BasCompanyCertificateImage" select="getProvImgFilelistByCertificateId">
+            <id property="certificateId" column="certificateId"/>
+            <result property="filePath" column="file_path"/>
+        </collection>
+    </resultMap>
+
+    <select id="getProvImgFilelistByCertificateId" resultType="gyqx.spdhdi.po.BasCompanyCertificateImage">
+		select
+			certificate_id as certificateId,
+			file_path
+		from prov_certificate_image
+		where
+			certificate_id = #{id}
+	</select>
+
+    <resultMap type="gyqx.spdhdi.myInfos.vo.CompanyCertificateVo" id="companyCertificateVo">
+        <id property="id" column="id"/>
+        <id property="companyId" column="company_id"/>
+        <id property="companyName" column="companyName"/>
+        <result property="certKind"  column="cert_kind"/>
+        <result property="certCode"  column="cert_code"/>
+        <result property="expdtBeginDate"  column="expdt_begin_date"/>
+        <result property="expdtEndDate"  column="expdt_end_date"/>
+        <result property="isValiding"  column="is_validing"/>
+        <result property="uid" column="uxid"/>
+        <result property="fillDate" column="fill_date"/>
+        <result property="lastUpdateDatetime" column="last_update_datetime"/>
+        <result property="version" column="version"/>
+        <collection property="basCompanyCertificateImages" column="id" ofType="gyqx.spdhdi.po.BasCompanyCertificateImage" select="getImgFilelistByCertificateId">
+            <id property="certificateId" column="certificateId"/>
+            <result property="filePath" column="file_path"/>
+        </collection>
+    </resultMap>
+
+    <select id="getImgFilelistByCertificateId" resultType="gyqx.spdhdi.po.BasCompanyCertificateImage">
+		select
+			certificate_id as certificateId,
+			file_path
+		from bas_company_certificate_image
+		where
+			certificate_id = #{id}
+	</select>
+
+    <!-- 供应商用户获取厂商证照及图片 -->
+    <select id="listMfrsCertByProv" resultMap="ProvMfrsCertificateVoResultMap">
+        SELECT
+        cert.*, comp.cname as mfrsName
+        FROM
+        prov_mfrs_certificate cert
+        left join prov_mfrs_info pm on pm.id = cert.p_id
+        left join bas_company_info comp on comp.id = cert.mfrs_id
+        where
+        pm.prov_id = #{provId}
+        <if test="start != null and end != null and start gte end">
+            and cert.expdt_end_date <![CDATA[ <= ]]> #{end}
+        </if>
+        <if test="start != null and end != null and start lt end">
+            and cert.expdt_end_date <![CDATA[ <= ]]> #{end} and  cert.expdt_end_date <![CDATA[ > ]]> #{start}
+        </if>
+        <if test="aboutName != '' and aboutName != null">
+            <bind name="searchName" value="'%'+aboutName+'%'"/>
+            and (cert.cert_code like #{searchName} or comp.cname like #{searchName})
+        </if>
+        ORDER BY comp.cname,cert.cert_kind
+    </select>
+
+    <resultMap id="ProvMfrsCertificateVoResultMap" type="gyqx.spdhdi.mycerts.vo.ProvMfrsCertificateVo">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="p_id" property="pId" jdbcType="VARCHAR"/>
+        <!--<result column="mfrs_id" property="mfrsId" jdbcType="VARCHAR"/>-->
+        <result column="cert_kind" property="certKind" jdbcType="VARCHAR"/>
+        <result column="cert_code" property="certCode" jdbcType="VARCHAR"/>
+        <result column="expdt_begin_date" property="expdtBeginDate" jdbcType="TIMESTAMP"/>
+        <result column="expdt_end_date" property="expdtEndDate" jdbcType="TIMESTAMP"/>
+        <result column="is_validing" property="isValiding" jdbcType="VARCHAR"/>
+        <result column="version" property="version" jdbcType="INTEGER"/>
+        <collection property="imageList" column="id" ofType="ProvMfrsCertificateImageVoResultMap"
+                    select="getImageList"/>
+    </resultMap>
+
+    <select id="getImageList" resultMap="ProvMfrsCertificateImageVoResultMap">
+        SELECT id, file_path FROM prov_mfrs_certificate_image WHERE certificate_id = #{id}
+    </select>
+
+    <resultMap id="ProvMfrsCertificateImageVoResultMap" type="gyqx.spdhdi.mycerts.vo.ProvMfrsCertificateImageVo">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <!--<result column="certificate_id" property="certificateId" jdbcType="VARCHAR"/>-->
+        <result column="file_path" property="filePath" jdbcType="VARCHAR"/>
+    </resultMap>
+
+</mapper>

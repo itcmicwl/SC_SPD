@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="gyqx.mdqc.mycerts.dao.mapper.BasRegistrationMapper">
+    <insert id="insertCert">
+        INSERT INTO bas_registration_info (id, reg_kind, product_name, certificate_code, mfrs_id, expdt_begin_date,
+                expdt_end_date, is_old_info, uxid, fill_date, last_update_datetime, version)
+        VALUES (#{vo.id}, #{vo.regKind}, #{vo.productName}, #{vo.certificateCode}, #{vo.mfrsId}, #{vo.expdtBeginDate},
+                #{vo.expdtEndDate}, #{vo.isOldInfo}, #{operId}, SYSDATE, SYSDATE, 0)
+    </insert>
+    <insert id="insertCertImg">
+        INSERT INTO bas_registration_image (id, certificate_id, file_path, fill_date, uxid, last_update_datetime, version)
+        <foreach collection="vo" item="item" separator="UNION ALL">
+            (SELECT #{item.id}, #{item.certificateId}, #{item.filePath}, SYSDATE, #{operId}, SYSDATE, 0 FROM DUAL)
+        </foreach>
+    </insert>
+    <insert id="insertCertGoods">
+        INSERT INTO bas_regist_goods (id, certificate_id, goods_id, uxid, fill_date, last_update_datetime, version)
+        <foreach collection="vo" separator="UNION ALL" item="item">
+            (SELECT #{item.id}, #{item.certificateId}, #{item.goodsId}, #{operId}, SYSDATE, SYSDATE, 0 FROM DUAL)
+        </foreach>
+    </insert>
+    <delete id="delCertImg">
+        DELETE FROM bas_registration_image WHERE id IN
+        <foreach collection="vo" item="item" open="(" close=")" separator=",">
+            #{item.id}
+        </foreach>
+    </delete>
+    <delete id="delCertGoods">
+        DELETE FROM bas_regist_goods WHERE id IN
+        <foreach collection="vo" item="item" open="(" close=")" separator=",">
+            #{item.id}
+        </foreach>
+    </delete>
+    <select id="listCerts" resultType="gyqx.mdqc.mycerts.vo.BasRegistrationInfoVo">
+        SELECT cert.id, cert.reg_kind, cert.product_name, cert.certificate_code, cert.mfrs_id, cert.expdt_begin_date,
+               cert.expdt_end_date, cert.is_old_info, cert.version, comp.cname AS mfrs_name
+        FROM bas_registration_info cert
+        LEFT OUTER JOIN bas_company_info comp ON (cert.mfrs_id = comp.id AND comp.kind = 3)
+        <where>
+            <if test="input != null and input != '' ">
+                <bind name="input_bind" value="'%'+input+'%'"/>
+                (cert.product_name LIKE #{input_bind} OR cert.certificate_code LIKE #{input_bind})
+            </if>
+            <if test="type != null and type != ''">
+                AND cert.reg_kind = #{type}
+            </if>
+            <if test="mfrsId != null and mfrsId != ''">
+                AND cert.mfrs_id = #{mfrsId}
+            </if>
+        </where>
+        ORDER BY cert.product_name, comp.cname, cert.is_old_info
+    </select>
+    <select id="getMfrsProduct" resultType="gyqx.mdqc.mycerts.vo.BasGoodsInfoVo">
+        SELECT id, id AS goods_id, goods_name, goods_gg, version
+        FROM bas_goods_info
+        WHERE
+            mfrs_id = #{mfrsId}
+            <if test="input != null and input != ''">
+                <bind name="input_bind" value="'%'+input+'%'"/>
+                AND (goods_name LIKE #{input_bind} OR short_pinyin LIKE #{input_bind} OR goods_gg LIKE #{input_bind})
+            </if>
+    </select>
+    <select id="getCert" resultMap="BasRegistrationInfoVoResultMap">
+        SELECT cert.id, cert.certificate_code, cert.expdt_begin_date, cert.expdt_end_date, cert.is_old_info,
+               cert.mfrs_id, cert.reg_kind, cert.version, cert.product_name, comp.cname AS mfrs_name,
+               img.id AS img_id, img.certificate_id AS img_certificate_id, img.file_path AS img_file_path,img.version AS img_version,
+               goods.id AS goods_id, goods.version AS goods_version, goods_info.id AS goods_goods_id, goods_info.goods_name AS goods_goods_name, goods_info.goods_gg AS goods_goods_gg
+        FROM bas_registration_info cert
+        LEFT OUTER JOIN bas_registration_image img ON img.certificate_id = cert.id
+        LEFT OUTER JOIN bas_regist_goods goods ON goods.certificate_id = cert.id
+        LEFT OUTER JOIN bas_goods_info goods_info ON goods_info.id = goods.goods_id
+        LEFT OUTER JOIN bas_company_info comp ON (cert.mfrs_id = comp.id AND comp.kind = 3)
+        WHERE
+            cert.id = #{id} AND cert.version = #{version}
+    </select>
+
+    <resultMap id="BasRegistrationInfoVoResultMap" type="gyqx.mdqc.mycerts.vo.BasRegistrationInfoVo" autoMapping="true">
+        <id column="id" property="id"/>
+        <collection property="fileList" autoMapping="true" columnPrefix="img_" ofType="gyqx.mdqc.mycerts.vo.BasRegistrationImageVo">
+            <id property="id" column="id"/>
+        </collection>
+        <collection property="products" autoMapping="true" columnPrefix="goods_" ofType="gyqx.mdqc.mycerts.vo.BasGoodsInfoVo">
+            <id property="id" column="id"/>
+        </collection>
+    </resultMap>
+</mapper>

@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="gyqx.spdhdi.mycerts.dao.mapper.ProvMfrsInfoMapper">
+    <resultMap id="BaseResultMap" type="gyqx.spdhdi.mycerts.vo.ProvMfrsInfoVo">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="prov_id" property="provId" jdbcType="VARCHAR"/>
+        <result column="mfrs_id" property="mfrsId" jdbcType="VARCHAR"/>
+        <result column="flag" property="flag" jdbcType="CHAR"/>
+        <result column="version" property="version" jdbcType="INTEGER"/>
+        <association property="mfrsInfo" javaType="gyqx.spdhdi.mycerts.vo.BasMfrsInfoMyCertsVo">
+            <id column="mfrs_id" property="id"/>
+            <result column="mfrs_kind" property="mfrsKind" jdbcType="VARCHAR"/>
+            <result column="mfrs_name" property="mfrsName" jdbcType="VARCHAR"/>
+            <result column="agent_name" property="agentName" jdbcType="VARCHAR"/>
+            <result column="reg_code" property="regCode" jdbcType="VARCHAR"/>
+            <result column="jyxk_code" property="jyxkCode" jdbcType="VARCHAR"/>
+            <result column="nsrsb_code" property="nsrsbCode" jdbcType="VARCHAR"/>
+            <result column="product_code" property="productCode" jdbcType="VARCHAR"/>
+            <result column="remark" property="remark" jdbcType="VARCHAR"/>
+            <result column="is_three_in_one" property="isThreeInOne" jdbcType="CHAR"/>
+        </association>
+    </resultMap>
+    <resultMap id="BasMfrsInfoMyCertsVoResultMap" type="gyqx.spdhdi.mycerts.vo.BasMfrsInfoMyCertsVo">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="mfrs_kind" property="mfrsKind" jdbcType="VARCHAR"/>
+        <result column="mfrs_name" property="mfrsName" jdbcType="VARCHAR"/>
+        <result column="agent_name" property="agentName" jdbcType="VARCHAR"/>
+        <result column="reg_code" property="regCode" jdbcType="VARCHAR"/>
+        <result column="jyxk_code" property="jyxkCode" jdbcType="VARCHAR"/>
+        <result column="nsrsb_code" property="nsrsbCode" jdbcType="VARCHAR"/>
+        <result column="product_code" property="productCode" jdbcType="VARCHAR"/>
+        <result column="remark" property="remark" jdbcType="VARCHAR"/>
+        <result column="is_three_in_one" property="isThreeInOne" jdbcType="CHAR"/>
+    </resultMap>
+    <insert id="insertCertList" databaseId="mysql">
+        INSERT INTO prov_mfrs_certificate (id, p_id, mfrs_id, cert_kind, cert_code, expdt_begin_date, expdt_end_date,
+        is_validing,
+        uxid, fill_date, last_update_datetime, version)
+        VALUES
+        <foreach collection="certList" item="item" index="index" open="(" separator="),(" close=")">
+            #{item.id}, #{pId}, #{mfrsId}, #{item.certKind}, #{item.certCode}, #{item.expdtBeginDate},
+            #{item.expdtEndDate},
+            #{item.isValiding}, #{uId}, NOW(), NOW(), 0
+        </foreach>
+    </insert>
+    <insert id="insertCertList" databaseId="oracle">
+        INSERT INTO prov_mfrs_certificate (id, p_id, mfrs_id, cert_kind, cert_code, expdt_begin_date, expdt_end_date,
+        is_validing,
+        uxid, fill_date, last_update_datetime, version)
+        <foreach collection="certList" item="item" index="index" separator="union all">
+            select #{item.id}, #{pId}, #{mfrsId}, #{item.certKind}, #{item.certCode}, #{item.expdtBeginDate},
+            #{item.expdtEndDate},
+            #{item.isValiding}, #{uId}, sysdate, sysdate, 0 from dual
+        </foreach>
+    </insert>
+    <insert id="insertImageList" databaseId="mysql">
+        INSERT INTO prov_mfrs_certificate_image (id, certificate_id, file_path, fill_date, uxid, last_update_datetime,
+        version)
+        VALUES
+        <foreach collection="imageList" item="item" index="index" open="(" separator="),(" close=")">
+            #{item.id}, #{certId}, #{item.filePath}, NOW(), #{uId}, NOW(), 0
+        </foreach>
+    </insert>
+    <insert id="insertImageList" databaseId="oracle">
+        INSERT INTO prov_mfrs_certificate_image (id, certificate_id, file_path, fill_date, uxid, last_update_datetime,
+        version)
+        <foreach collection="imageList" item="item" index="index" separator="union all">
+            select #{item.id}, #{certId}, #{item.filePath}, sysdate, #{uId}, sysdate, 0 from dual
+        </foreach>
+    </insert>
+    <delete id="delMfrsCertImg">
+        DELETE FROM prov_mfrs_certificate_image WHERE certificate_id = #{certId}
+    </delete>
+    <select id="getMfrsInfo" resultMap="BaseResultMap">
+        SELECT
+        p.id,
+        p.prov_id,
+        p.mfrs_id,
+        p.flag,
+        b.mfrs_kind,
+        b.mfrs_name,
+        b.agent_name,
+        b.reg_code,
+        b.jyxk_code,
+        b.nsrsb_code,
+        b.product_code,
+        b.remark,
+        b.is_three_in_one,
+        p.version
+        FROM
+        prov_mfrs_info p
+        JOIN
+        bas_mfrs_info b ON p.mfrs_id = b.id
+        WHERE
+        p.prov_id = #{provId} and b.flag != '0'
+        <if test="searchType == 1">
+            and b.mfrs_kind = 1
+        </if>
+        <if test="searchType == 2">
+            and b.mfrs_kind = 2
+        </if>
+        <if test="searchText != ''">
+            <bind name="text" value="'%'+searchText+'%'"/>
+            and b.mfrs_name like #{text}
+        </if>
+    </select>
+    <select id="getBasMfrs" resultMap="BasMfrsInfoMyCertsVoResultMap">
+        select id, mfrs_kind, mfrs_name, agent_name, reg_code, jyxk_code,
+        nsrsb_code, product_code, remark, is_three_in_one
+        from bas_mfrs_info
+        <where>
+            <if test="mfrsName != ''">
+                <bind name="name" value="'%'+mfrsName+'%'"/>
+                mfrs_name like #{name}
+            </if>
+            and flag != '0'
+        </where>
+    </select>
+    <resultMap id="ProvMfrsCertificateVoResultMap" type="gyqx.spdhdi.mycerts.vo.ProvMfrsCertificateVo">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="p_id" property="pId" jdbcType="VARCHAR"/>
+        <!--<result column="mfrs_id" property="mfrsId" jdbcType="VARCHAR"/>-->
+        <result column="cert_kind" property="certKind" jdbcType="VARCHAR"/>
+        <result column="cert_code" property="certCode" jdbcType="VARCHAR"/>
+        <result column="expdt_begin_date" property="expdtBeginDate" jdbcType="TIMESTAMP"/>
+        <result column="expdt_end_date" property="expdtEndDate" jdbcType="TIMESTAMP"/>
+        <result column="is_validing" property="isValiding" jdbcType="VARCHAR"/>
+        <result column="version" property="version" jdbcType="INTEGER"/>
+        <collection property="imageList" column="id" ofType="ProvMfrsCertificateImageVoResultMap"
+                    select="getImageList"/>
+    </resultMap>
+    <resultMap id="ProvMfrsCertificateImageVoResultMap" type="gyqx.spdhdi.mycerts.vo.ProvMfrsCertificateImageVo">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <!--<result column="certificate_id" property="certificateId" jdbcType="VARCHAR"/>-->
+        <result column="file_path" property="filePath" jdbcType="VARCHAR"/>
+    </resultMap>
+    <select id="getCertList" resultMap="ProvMfrsCertificateVoResultMap">
+        SELECT id, p_id, cert_kind, cert_code, expdt_begin_date, expdt_end_date, is_validing, version
+        FROM prov_mfrs_certificate
+        WHERE p_id = #{id}
+        ORDER BY cert_kind
+    </select>
+    <select id="getImageList" resultMap="ProvMfrsCertificateImageVoResultMap">
+        SELECT id, file_path FROM prov_mfrs_certificate_image WHERE certificate_id = #{id}
+    </select>
+</mapper>

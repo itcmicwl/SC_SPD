@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="gyqx.spdhdi.orderMgr.dao.mapper.IProHosGoodsInfoMapper">
+	<select id="getProHosGoodsList" resultType="gyqx.spdhdi.orderMgr.vo.ProHosGoodsInfoVo"
+		parameterType="gyqx.spdhdi.orderMgr.vo.ProHosGoodsInfoVo">
+		SELECT
+		t.id,
+		t.prov_id AS provId,
+		t.hos_id AS hosId,
+		t.prov_goodsid AS provGoodsId,
+		t.his_code AS hisCode,
+		t.his_name AS hisName,
+		t.his_unit AS hisUnit,
+		t.sale_price AS salePrice,
+		t.unit_rate AS unitRate,
+		t.goods_gg AS goodsGg,
+		t.made,
+		t.mfrs_id AS mfrsId,
+		t.erp_code AS erpCode,
+		t.hit_code AS hitCode,
+		t.hit_price AS hitPrice,
+		t.packeage,
+		t.master_code AS masterCode,
+		t.kind_68code AS kind68Code,
+		t.short_pinyin AS shortPinyin,
+		t.goods_name AS goodsName,
+		t.code,
+		t.unit,
+		t.prov_name AS provName,
+		t.hos_name AS hosName,
+		t.mfrs_name AS mfrsName
+		FROM
+		v_pro_hos_goodsinfo t
+		<where>
+			1=1
+			<if test='goodsName != null and goodsName !=""'>
+				<bind name="goodsName" value="'%' + goodsName + '%'" />
+				and (goods_name like #{goodsName}
+				or his_name like #{goodsName})				
+			</if>
+			<if test='code != null and code !=""'>
+				<bind name="code" value="'%' + code + '%'" />
+				and (code like #{code}
+				or his_code like #{code}
+				or erp_code like #{code}
+				or hit_code like #{code}
+				or master_code like #{code})
+			</if>
+			<if test='shortPinyin != null and shortPinyin !=""'>
+				<bind name="shortPinyin" value="'%' + shortPinyin + '%'" />
+				and short_pinyin like #{shortPinyin}
+			</if>
+		</where>
+	</select>
+</mapper>

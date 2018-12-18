@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:c="http://camel.apache.org/schema/spring"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+      	 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd  
+           http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+           http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+
+	<context:property-placeholder location="classpath*:gyqx/txp/*.properties" />
+	
+	<import resource="txp-dbconfig.xml"/>
+
+	<import resource="txp-taskconfig.xml"/>
+	<import resource="txp-errorhanders.xml"/>
+	<import resource="txp-beans.xml"/>
+    
+    <c:camelContext >    	
+    	
+   		<!-- begin *** 从 mysql库，copy 表到oracle ** -->
+
+    	<c:route id="test" errorHandlerRef="defaultDeadLetterErrorHandler">
+    		<c:from uri="timer://test?fixedRate=true&amp;period=500&amp;repeatCount=1" />
+    		<c:transform>
+	    		<c:groovy>
+	    		def db = DbSources.getCurrent().getDbSource("localhost");
+		    	def utils = new DbUtils(db);
+		    	def tables = utils.queryValues("select id from sys_table  order by id ",String); //where id >'sys_message_confirm'
+		    	//tables=['sys_message'];
+	    		</c:groovy>
+    		</c:transform>
+    		<c:split >
+	    		<c:simple>body</c:simple>
+	    		<c:to uri="seda:tableFromDbToDb"></c:to>
+	    	</c:split>
+	    	<c:log message="userMessageReceive writeMessage ${body}  end" />
+	    </c:route>
+	    
+	    <c:route id="tableFromDbToDb" errorHandlerRef="defaultDeadLetterErrorHandler">
+	    	<c:from uri="seda:tableFromDbToDb?queue=#arrayQueue&amp;concurrentConsumers=5" /> 
+	    	<c:log message="table name: ${body}"/> 
+    		<c:transform>
+	    		<c:groovy>
+	    		def tableName = body;
+	    		def db = DbSources.getCurrent().getDbSource("localhost");
+	    		def utils = new DbUtils(db);
+	    		
+	    		def db0 = DbSources.getCurrent().getDbSource("center");
+	    		def utils0 = new DbUtils(db0);	
+
+	    		
+	    		def metaInfo = DbSources.getCurrent().getDbMetaInfo(db0);
+				def tm = metaInfo.get(tableName);
+				def insertSql = TaskSqlBuilder.buildDefaultInsertSql(tm) ;
+	    		
+	    		def rows = utils.queryForStreamList('select * from ' + tableName);
+	    		
+	    		utils0.beginTransaction();
+	    		try{
+	    			utils0.update('delete from ' + tableName);
+	    			def i = 0
+		    		rows.each{row->
+		    			utils0.update(insertSql,row);	
+		    			println tableName +':row ' + (++i);
+		    		};
+		    		utils0.commit();
+	    		}catch(Exception ex){
+	    			utils0.rollback();
+	    			throw ex;
+	    		}
+	    		body = tableName;
+	    		</c:groovy>
+	    	</c:transform>
+	    	<c:log message="table name: ${body} end"/>
+	    </c:route>
+
+	    <!-- end *** 从 mysql库，copy 表到oracle ** -->
+	    
+	   
+    	
+    </c:camelContext>
+</beans>

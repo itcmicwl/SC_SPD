@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 引入接口，只要实现接口的方法就会调用对应接口方法的 select id -->
+<mapper namespace="gyqx.spdhdi.mycerts.dao.mapper.IMyProvMapper">
+	<!-- parameterType传入参数类型 resultMap=自己定义的一个返回类型 resultType返回类型 -->
+	<select id="getMyProvInfo" resultMap="myProvVo"
+		parameterType="gyqx.mdqc.mycerts.vo.MyProvParamVo">
+			select c.id,
+		       c.collector_id,
+		       c.prov_id,
+		       c.flag,
+		       c.fill_date,
+		       c.last_update_datetime,
+		       c.uxid,
+		       c.version,
+		       b.code,
+		       b.ygcode,
+		       b.cname,
+		       b.another_name,
+		       b.short_pinyin,
+		       b.reg_code,
+		       b.jyxk_code,
+		       b.nsrsb_code,
+		       b.kind,
+		       b.legal,
+		       b.address,
+		       b.linkman,
+		       b.contact_way,
+		       b.contact_fax,
+		       b.logo,
+		       b.post_code,
+		       b.email,
+		       b.remark,
+		       b.erp_code,
+		       b.is_supply,
+		       b.is_three_in_one,
+		       b.master_code,
+		       b.province,
+		       b.city,
+		       b.area,
+		       b.area_code,
+		       b.mfrs_kind,
+		       b.product_code,
+		       b.record_card,
+		       b.agent_name 
+	        from COLLECTOR_PROV_CERT c
+	        left join bas_company_info b on c.prov_id = b.id
+		<where>
+			c.collector_id = #{collectorId}
+			<if test='cname != null and cname !=""'>
+			 <bind name="cname" value="'%' + cname + '%'" />
+				and b.cname LIKE  #{cname}  
+			</if>
+			<if test='flag != null and flag !=""'>
+				and c.flag = #{flag}  
+			</if>
+		</where>
+		order by c.last_update_datetime desc
+	</select>
+	
+	<resultMap type="gyqx.mdqc.mycerts.vo.CollectorProvCertVo" id="myProvVo">
+		<id property="id" column="id"/>
+		<result property="collectorId"  column="collector_id"/>
+		<result property="provId"  column="prov_id"/>
+		<result property="flag" column="flag"/>
+		<result property="uxid" column="uxid"/>
+		<result property="fillDate" column="fill_date"/>   
+		<result property="lastUpdateDatetime" column="last_update_datetime"/>
+		<result property="version" column="version"/>
+		
+		<result column="code" property="code"/>
+		<result column="mfrs_kind" property="mfrsKind" jdbcType="VARCHAR" />
+		<result column="agent_name" property="agentName" jdbcType="VARCHAR" />
+		<result column="product_code" property="productCode" jdbcType="VARCHAR" />
+		<result column="record_card" property="recordCard" jdbcType="VARCHAR" />
+		
+		<result property="cname"  column="cname"/>
+		<result property="anotherName"  column="another_name"/>
+		<result property="shortPinyin"  column="short_pinyin"/>
+		<result property="regCode"  column="Reg_code"/>
+		<result property="jyxkCode"  column="jyxk_code"/>
+		<result property="nsrsbCode"  column="nsrsb_code"/>
+		<result property="kind"  column="kind"/>
+	    <result property="legal"  column="legal"/>
+		<result property="address"  column="address"/>
+		<result property="linkman"  column="linkman"/>
+		<result property="contactWay"  column="contact_way"/>
+		<result property="contactFax"  column="contact_fax"/>
+		<result property="logo" column="logo"/>
+		<result property="masterCode" column="master_code"/>   
+		<result property="postCode" column="post_code"/>  
+		<result property="email" column="email"/>
+		<result property="remark" column="remark"/>
+		<result property="erpCode" column="erp_code"/>
+		<result property="isSupply" column="is_supply"/>
+		<result property="isThreeInOne" column="is_three_in_one"/>
+		
+		<collection property="collectorProvCertificates" column="id" ofType="companyCertificateVo"
+                    select="getCollectorProvCertificates"/>
+	</resultMap>
+	
+	<select id="getCollectorProvCertificates" parameterType="java.lang.String" resultMap="companyCertificateVo">
+        select * from collector_prov_certificate c WHERE c.p_id = #{id}
+    </select>
+	<resultMap type="gyqx.spdhdi.myInfos.vo.CollectorProvCertificateVo" id="companyCertificateVo">
+		<id property="id" column="id"/>
+		<result property="pid" column="p_id"/>
+		<result property="certKind"  column="cert_kind"/>
+		<result property="certCode"  column="cert_code"/>
+		<result property="expdtBeginDate"  column="expdt_begin_date"/>
+		<result property="expdtEndDate"  column="expdt_end_date"/>
+		<result property="isValiding"  column="is_validing"/>
+		<result property="uxid" column="uxid"/>
+		<result property="fillDate" column="fill_date"/>   
+		<result property="lastUpdateDatetime" column="last_update_datetime"/>
+		<result property="version" column="version"/>
+		<collection property="provCertificateImage" column="id" ofType="basCompanyCertificateImageMap"
+                    select="getProvCertificateImages"/>
+	</resultMap>
+	
+	<select id="getProvCertificateImages"  resultMap="basCompanyCertificateImageMap">
+		SELECT * from prov_certificate_image t
+		<where>
+			t.certificate_id = #{id}
+		</where>
+	</select>
+	<resultMap type="gyqx.spdhdi.po.ProvCertificateImage" id="basCompanyCertificateImageMap">
+		<id property="id" column="id"/>
+		<result property="certificateId" column="certificate_id"/>
+		<result property="filePath"  column="file_path"/>
+		<result property="fileName"  column="file_name"/>
+		<result property="uxid" column="uxid"/>
+		<result property="fillDate" column="fill_date"/>   
+		<result property="lastUpdateDatetime" column="last_update_datetime"/>
+		<result property="version" column="version"/>
+	</resultMap>
+	
+	
+</mapper>

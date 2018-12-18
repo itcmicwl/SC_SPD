@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="gyqx.spdhdi.orderMgr.dao.mapper.IDistrBillMapper">
+	<select id="getOverViewInfo" parameterType="java.lang.String" resultType="gyqx.spdhdi.index.vo.OverViewVo">
+		select 
+			(SELECT COUNT(*) from purchase where status = '10' and purchase_company_id=#{comId}) as unSubmitPur,								
+			(SELECT COUNT(*) from purchase where status in('20','30') and purchase_company_id=#{comId})) as unConfirm,
+			(SELECT COUNT(*) from distr_bill where status in('20','30') and purchase_company_id=#{comId})) as unRecive,
+	</select>
+</mapper>

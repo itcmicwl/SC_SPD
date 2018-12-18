@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="gyqx.spdhdi.collector4orderMgr.dao.mapper.IProvProvGoodsMapper"> 
+<!-- parameterType传入参数类型     resultMap=自己定义的一个返回类型     resultType返回类型 -->
+	<select id="list"  resultMap="provProvGoodsMap" parameterType="gyqx.spdherp.po.ProvProvGoods">
+		<![CDATA[
+		select id,hos_id,collector_id,prov_id,prov_goods_id,version from prov_prov_goods
+		]]>
+		<where>
+		    <if test="id != null">and id = #{id}</if>
+		    <if test="hosId != null">and hos_id = #{hosId}</if>
+		    <if test="collectorId != null">and collector_id = #{collectorId}</if>
+		    <if test="provId != null">and prov_id = #{provId}</if>
+			
+		</where>
+		
+	</select>
+	
+	<select id="listVo"  resultMap="provProvGoodsVoMap" parameterType="gyqx.spdhdi.collector4orderMgr.vo.ProvProvGoodsVo">
+	
+select ppg.id, ppg.hos_id,ppg.collector_id,ppg.prov_id,ppg.version ,
+     bH.cname as hosName,
+     bP.cname as provName,
+     bC.cname as collectorName,
+v.prov_goodsid as provGoodsId,
+v.goods_gg as goodsGg,
+v.mfrs_id as goodsMrfsId,
+v.mfrs_name as mfrsName,
+v.made as made,
+v.prov_erp_code as provGoodsErpCode,
+v.goods_name as provGoodsErpName,
+v.his_unit as returnUnit,
+v.unit_rate as returnScale,
+v.unit as sendUnit,
+v.price as sendPrice,
+v.his_name as hosGoodsName,
+v.id as hosGoodsId,
+v.his_code as hosGoodsCode,
+v.hos_erp_code
+      from prov_prov_goods ppg 
+      LEFT JOIN v_pro_hos_goodsinfo v on v.prov_goodsid = ppg.prov_goods_id and v.hos_id = ppg.hos_id and v.prov_id = ppg.prov_id
+      LEFT JOIN bas_company_info bH on bH.id = ppg.hos_id
+      LEFT JOIN bas_company_info bP on bP.id = ppg.prov_id
+      LEFT JOIN bas_company_info bC on bC.id = ppg.collector_id
+		<where>
+		    <if test="id != null">and ppg.id = #{id}</if>
+		    <if test="hosId != null">and ppg.hos_id = #{hosId}</if>
+		    <if test="collectorId != null">and ppg.collector_id = #{collectorId}</if>
+		    <if test="provId != null">and ppg.prov_id = #{provId}</if>
+			
+		</where>
+		
+	</select>
+ 	<resultMap type="gyqx.spdherp.po.ProvProvGoods" id="provProvGoodsMap">
+		<id property="id" column="id"/>
+		<result property="hosId"  column="hos_id"/>
+		<result property="collectorId"  column="collector_id"/>
+		<result property="provId"  column="prov_id"/>
+		<result property="provGoodsId"  column="prov_goods_id"/>
+		<result property="version"  column="version"/>
+	</resultMap> 
+	 <resultMap type="gyqx.spdhdi.collector4orderMgr.vo.ProvProvGoodsVo"  extends ="provProvGoodsMap" id="provProvGoodsVoMap">
+	    <result property="hosName"  column="hosName"/>
+		<result property="collectorName"  column="collectorName"/>
+		<result property="provName"  column="provName"/>
+		
+		<result property="provGoodsId"  column="provGoodsId"/>
+		<result property="goodsGg"  column="goodsGg"/>
+		<result property="goodsMrfsId"  column="goodsMrfsId"/>
+	    <result property="mfrsName"  column="mfrsName"/>
+		<result property="made"  column="made"/>
+		<result property="provGoodsErpCode"  column="provGoodsErpCode"/>
+		<result property="provGoodsErpName"  column="provGoodsErpName"/>
+		<result property="returnUnit"  column="returnUnit"/>
+		<result property="returnScale"  column="returnScale"/>		
+		<result property="sendUnit"  column="sendUnit"/>
+		<result property="sendPrice"  column="sendPrice"/>
+		<result property="hosGoodsCode"  column="hosGoodsCode"/>
+		<result property="hosGoodsName"  column="hosGoodsName"/>
+		<result property="hosGoodsId"  column="hosGoodsId"/>
+
+
+	</resultMap> 
+	<update id="update" parameterType="gyqx.spdherp.po.ProvProvGoods" >
+		update prov_prov_goods
+		<set>
+			<if test='hosId != null'>  
+				hos_id = #{hosId},
+			</if> 
+			<if test='collectorId != null'>  
+				collector_id = #{collectorId},
+			</if> 
+			<if test='provId != null'>  
+				prov_id = #{provId},
+			</if> 
+			<if test='hosGoodsId != null'>  
+				prov_goods_id = #{provGoodsId},
+			</if> 
+			version=version+1,
+		</set>
+		<where>
+			and id = #{id}
+			and version= #{version}
+		</where>
+	</update>
+	
+	<insert id="insert" parameterType="gyqx.spdherp.po.ProvProvGoods" >
+		insert into prov_prov_goods 
+		( id , hos_id , collector_id , prov_id , prov_goods_id , version  )
+		values (#{id},#{hosId},#{collectorId},#{provId},#{provGoodsId},#{version})
+	</insert>
+</mapper>

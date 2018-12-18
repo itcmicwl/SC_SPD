@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="gyqx.spdhdi.orderMgr.dao.mapper.IReturnBillUniqueListMapper"> 
+<!-- parameterType传入参数类型     resultMap=自己定义的一个返回类型     resultType返回类型 -->
+	<select id="list"  resultMap="returnBillUniqueListMap" parameterType="gyqx.spdhdi.po.ReturnBillUniqueList">
+		<![CDATA[
+		select id,pid,return_bill_id,return_row_number,hos_goods_id,batch_code,unique_code,source_data,version from return_bill_unique_list
+		]]>
+		<where>
+			and id = #{id}
+		</where>
+	</select>
+		<select id="listVo"  resultMap="returnBillUniqueListMap" parameterType="gyqx.spdhdi.orderMgr.vo.ReturnBillUniqueListVo">
+		<![CDATA[
+		select id,pid,return_bill_id,return_row_number,hos_goods_id,batch_code,unique_code,source_data,version from return_bill_unique_list
+		]]>
+		<where>
+                 <if test="pid!=null and pid!=''">
+                     and pid = #{pid}
+                 </if>
+                  <if test="returnRowNumber!=null  and returnRowNumber!=''">
+                     and return_row_number = #{returnRowNumber}
+                 </if>
+		</where>
+	</select>
+ 	<resultMap type="gyqx.spdhdi.po.ReturnBillUniqueList" id="returnBillUniqueListMap">
+		<id property="id" column="id"/>
+		<result property="pid"  column="pid"/>
+		<result property="returnBillId"  column="return_bill_id"/>
+		<result property="returnRowNumber"  column="return_row_number"/>
+		<result property="hosGoodsId"  column="hos_goods_id"/>
+		<result property="batchCode"  column="batch_code"/>
+		<result property="uniqueCode"  column="unique_code"/>
+		<result property="sourceData"  column="source_data"/>
+		<result property="version"  column="version"/>
+	</resultMap> 
+	
+	<update id="update" parameterType="gyqx.spdhdi.po.ReturnBillUniqueList" >
+		update return_bill_unique_list
+		<set>
+			<if test='pid != null'>  
+				pid = #{pid},
+			</if> 
+			<if test='returnBillId != null'>  
+				return_bill_id = #{returnBillId},
+			</if> 
+			<if test='returnRowNumber != null'>  
+				return_row_number = #{returnRowNumber},
+			</if> 
+			<if test='hosGoodsId != null'>  
+				hos_goods_id = #{hosGoodsId},
+			</if> 
+			<if test='batchCode != null'>  
+				batch_code = #{batchCode},
+			</if> 
+			<if test='uniqueCode != null'>  
+				unique_code = #{uniqueCode},
+			</if> 
+			<if test='sourceData != null'>  
+				source_data = #{sourceData},
+			</if>
+			<if test="_databaseId == 'mysql'">
+				last_update_datetime = sysdate(),
+			</if>
+			<if test="_databaseId == 'oracle'">
+				last_update_datetime = sysdate,
+			</if>
+			version=version+1,
+		</set>
+		<where>
+			and id = #{id}
+			and version= #{version}
+		</where>
+	</update>
+	
+	<insert id="insert" parameterType="gyqx.spdhdi.po.ReturnBillUniqueList" >
+		insert into return_bill_unique_list 
+		( id , pid , return_bill_id , return_row_number , hos_goods_id , batch_code , unique_code , source_data , version, last_update_datetime )
+		values (#{id},#{pid},#{returnBillId},#{returnRowNumber},#{hosGoodsId},#{batchCode},#{uniqueCode},#{sourceData},#{version},
+		<if test="_databaseId == 'mysql'">
+			sysdate()
+		</if>
+		<if test="_databaseId == 'oracle'">
+			sysdate
+		</if>
+		)
+	</insert>
+	<delete id="deleteReturnBillUniqueListByPid" parameterType="java.lang.String">
+		DELETE
+		FROM
+		return_bill_unique_list
+		WHERE pid=#{pid}
+	</delete>
+	<delete id="deleteReturnBillUniqueListByBillId" parameterType="java.lang.String">
+		DELETE
+		FROM
+		return_bill_unique_list
+		WHERE return_bill_id=#{returnBillId}
+	</delete>
+</mapper>

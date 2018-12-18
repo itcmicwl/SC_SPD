@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="gyqx.spdhdi.baseData.dao.mapper.BasBarcodeRuleMapper">
+    <resultMap id="BaseResultMap" type="gyqx.spdhdi.baseData.vo.BasBarcodeRule">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="barcode_len" property="barcodeLen" jdbcType="INTEGER"/>
+        <result column="barleader" property="barleader" jdbcType="VARCHAR"/>
+        <result column="consumables_position" property="consumablesPosition" jdbcType="INTEGER"/>
+        <result column="consumables_len" property="consumablesLen" jdbcType="INTEGER"/>
+        <result column="is_main" property="isMain" jdbcType="VARCHAR"/>
+        <result column="period_position" property="periodPosition" jdbcType="INTEGER"/>
+        <result column="period_format" property="periodFormat" jdbcType="VARCHAR"/>
+        <result column="production_position" property="productionPosition" jdbcType="INTEGER"/>
+        <result column="production_len" property="productionLen" jdbcType="INTEGER"/>
+        <result column="sign1_position" property="sign1Position" jdbcType="INTEGER"/>
+        <result column="sign1" property="sign1" jdbcType="VARCHAR"/>
+        <result column="sign2_position" property="sign2Position" jdbcType="INTEGER"/>
+        <result column="sign2" property="sign2" jdbcType="VARCHAR"/>
+        <result column="tracknum_position" property="tracknumPosition" jdbcType="INTEGER"/>
+        <result column="tracknum_len" property="tracknumLen" jdbcType="INTEGER"/>
+        <result column="flag" property="flag" jdbcType="VARCHAR"/>
+    </resultMap>
+    <sql id="Base_Column_List">
+    id, barcode_len, barleader, consumables_position, consumables_len, is_main, period_position, 
+    period_format, production_position, production_len, sign1_position, sign1, sign2_position, 
+    sign2, tracknum_position, tracknum_len, flag
+  </sql>
+    <select id="getByBarcodeLen" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM bas_barcode_rules WHERE barcode_len = #{len} AND flag = 1
+    </select>
+    <select id="getHisNameByGoodsListId" resultType="java.lang.String">
+        SELECT his_name
+        FROM prov_goods_hos
+        WHERE hos_id = #{corpId} AND
+        <foreach collection="goodsList" item="item" open="(" close=")" separator="OR">
+            prov_goodsid = #{item.id}
+        </foreach>
+    </select>
+    <!--    <select id="getGoodsHosId" resultType="java.lang.String">
+            SELECT id
+            FROM prov_goods_hos
+            WHERE hos_id = #{hosId} AND prov_id = #{provId} AND
+            <foreach collection="goodsInfoList" item="item" open="(" close=")" separator="OR">
+                prov_goodsid = #{item.id}
+            </foreach>
+        </select>-->
+    <select id="getGoodsHosId" resultType="java.lang.String">
+        SELECT prov_goodsid
+        FROM v_pro_hos_goodsinfo
+        WHERE hos_id = #{hosId} AND prov_id = #{provId} AND
+        <foreach collection="goodsInfoList" item="item" open="(" close=")" separator="OR">
+            prov_goodsid = #{item.id}
+        </foreach>
+    </select>
+
+    <select id="getProvGoodsHosIds" resultType="java.lang.String">
+        SELECT prov_goodsid
+        FROM v_pro_hos_goodsinfo
+        WHERE hos_id = #{hosId} AND prov_id = #{provId} AND mfrs_goods_code = #{goodsNo}
+    </select>
+
+</mapper>

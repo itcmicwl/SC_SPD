@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="gyqx.spdhdi.mycerts.dao.mapper.ProvRegInfoMapper">
+    <!--    <resultMap id="BasRegistrationInfoBaseResultMap" type="gyqx.spdhdi.po.ProvRegistrationInfo">
+            <id column="id" property="id" jdbcType="VARCHAR"/>
+            <result column="prov_id" property="provId" jdbcType="VARCHAR"/>
+            <result column="reg_kind" property="regKind" jdbcType="VARCHAR"/>
+            <result column="product_name" property="productName" jdbcType="VARCHAR"/>
+            <result column="mfrs_id" property="mfrsId" jdbcType="VARCHAR"/>
+            <result column="certificate_code" property="certificateCode" jdbcType="VARCHAR"/>
+            <result column="expdt_begin_date" property="expdtBeginDate" jdbcType="TIMESTAMP"/>
+            <result column="expdt_end_date" property="expdtEndDate" jdbcType="TIMESTAMP"/>
+            <result column="is_old_info" property="isOldInfo" jdbcType="CHAR"/>
+            <result column="uid" property="uid" jdbcType="VARCHAR"/>
+            <result column="fill_date" property="fillDate" jdbcType="TIMESTAMP"/>
+            <result column="last_update_datetime" property="lastUpdateDatetime" jdbcType="TIMESTAMP"/>
+            <result column="version" property="version" jdbcType="INTEGER"/>
+        </resultMap>-->
+    <resultMap id="ProvRegistrationInfoVoBaseResultMap" type="gyqx.spdhdi.mycerts.vo.ProvRegInfoVo">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="prov_id" property="provId" jdbcType="VARCHAR"/>
+        <result column="reg_kind" property="regKind" jdbcType="VARCHAR"/>
+        <result column="product_name" property="productName" jdbcType="VARCHAR"/>
+        <result column="certificate_code" property="certificateCode" jdbcType="VARCHAR"/>
+        <result column="mfrs_id" property="mfrsId" jdbcType="VARCHAR"/>
+        <result column="mfrs_name" property="mfrsName" jdbcType="VARCHAR"/>
+        <result column="expdt_begin_date" property="expdtBeginDate" jdbcType="TIMESTAMP"/>
+        <result column="expdt_end_date" property="expdtEndDate" jdbcType="TIMESTAMP"/>
+        <result column="is_old_info" property="isOldInfo" jdbcType="CHAR"/>
+        <result column="pic_num" property="picNum" jdbcType="INTEGER"/>
+        <result column="version" property="version" jdbcType="INTEGER"/>
+        <collection property="selectedGoods" column="{provId=prov_id, certId=id, mfrsId=mfrs_id}"
+                    ofType="ProvGoodsInfo4CertVoBaseResultMap" select="getSelectedGoods"/>
+    </resultMap>
+    <resultMap type="gyqx.spdhdi.mycerts.vo.DlgBasRegInfoVo" id="dlgMfrsCertVoMap">
+        <result property="id" column="id"/>
+        <result property="mfrsId" column="mfrs_id"/>
+        <result property="regKind" column="reg_kind"/>
+        <result property="productName" column="product_name"/>
+        <result property="certificateCode" column="certificate_code"/>
+        <result property="expdtBeginDate" column="expdt_begin_date"/>
+        <result property="expdtEndDate" column="expdt_end_date"/>
+        <result property="mfrsName" column="mfrs_name"/>
+    </resultMap>
+    <insert id="addGoods" parameterType="java.util.List" databaseId="mysql">
+        INSERT INTO prov_regist_goods (id, prov_id, certificate_id, goods_id, uxid, fill_date, last_update_datetime, version)
+        VALUES
+        <foreach collection="goodsList" item="item" index="index" open="(" separator="),(" close=")">
+            #{item.id}, #{item.provId}, #{item.certificateId}, #{item.goodsId}, #{item.uid}, NOW(), NOW(), 0
+        </foreach>
+    </insert>
+    <insert id="addGoods" parameterType="java.util.List" databaseId="oracle">
+        INSERT INTO prov_regist_goods (id, prov_id, certificate_id, goods_id, uxid, fill_date, last_update_datetime, version)
+        VALUES
+        <foreach collection="goodsList" item="item" index="index" open="(" separator="),(" close=")">
+            #{item.id}, #{item.provId}, #{item.certificateId}, #{item.goodsId}, #{item.uid}, sysdate, sysdate, 0
+        </foreach>
+    </insert>
+    <delete id="delAllRelatedGoods">
+        DELETE FROM prov_regist_goods WHERE prov_id = #{provId} and certificate_id = #{certId}
+    </delete>
+    <delete id="delGoods">
+        delete from prov_regist_goods
+        where prov_id = #{provId}
+        and certificate_id = #{certId}
+        and goods_id in
+        <foreach collection="goodsIdSet" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <select id="getItemsCerts" resultMap="ProvRegistrationInfoVoBaseResultMap">
+        <if test="certificateCode != null and certificateCode != ''">
+            <bind name="certCode" value="'%'+certificateCode+'%'"/>
+        </if>
+        <if test="productName != null and productName != ''">
+            <bind name="pdtName" value="'%'+productName+'%'"/>
+        </if>
+        SELECT
+        reg.id, reg.prov_id, reg.reg_kind, reg.product_name, reg.certificate_code, reg.mfrs_id,
+        mfrs.mfrs_name, reg.expdt_begin_date, reg.expdt_end_date, reg.is_old_info, reg.version,
+        (select count(0) from prov_registration_image image where image.certificate_id = reg.id and image.prov_id =
+        reg.prov_id) as pic_num
+        FROM prov_registration_info reg
+        LEFT OUTER JOIN bas_company_info co ON reg.prov_id = co.id
+        LEFT OUTER JOIN bas_mfrs_info mfrs ON reg.mfrs_id = mfrs.id
+        <where>
+            <if test="id != ''">
+                reg.prov_id = #{id}
+            </if>
+            <if test="(certificateCode != null and certificateCode != '') and (productName != null and productName != '')">
+                and (reg.certificate_code like #{certCode} or reg.product_name like #{pdtName})
+            </if>
+            <if test="(certificateCode != null and certificateCode != '') and (productName == null or productName == '')">
+                and reg.certificate_code like #{certCode}
+            </if>
+            <if test="(certificateCode == null or certificateCode == '') and (productName != null and productName != '')">
+                and reg.product_name like #{pdtName}
+            </if>
+            and co.flag != '0' and mfrs.flag != '0'
+        </where>
+        ORDER BY reg.product_name
+    </select>
+    <select id="getMfrsCerts" resultMap="dlgMfrsCertVoMap">
+        SELECT
+        cert.id,
+        cert.mfrs_id,
+        cert.reg_kind,
+        cert.product_name,
+        cert.certificate_code,
+        cert.expdt_begin_date,
+        cert.expdt_end_date,
+        mfrs.mfrs_name
+        FROM
+        bas_registration_info cert
+        JOIN
+        bas_mfrs_info mfrs ON cert.mfrs_id = mfrs.id
+        <where>
+            <if test="mfrsId != '' and mfrsId != null">
+                cert.mfrs_id = #{mfrsId}
+            </if>
+            <if test="certCode != '' and certCode != null">
+                <bind name="bindCertCode" value="'%'+certCode+'%'"/>
+                and cert.certificate_code like #{bindCertCode}
+            </if>
+            <if test="regKind != '' and regKind != null">
+                and cert.reg_kind = #{regKind}
+            </if>
+            and mfrs.flag != '0' and cert.is_old_info = '0'
+        </where>
+    </select>
+
+    <resultMap id="ProvRegistrationImageVoMap" type="gyqx.spdhdi.mycerts.vo.ProvRegImageVo">
+        <result property="id" column="id"/>
+        <result property="certificateId" column="certificate_id"/>
+        <result property="filePath" column="file_path"/>
+        <result property="version" column="version"/>
+    </resultMap>
+    <select id="getCertImg" resultMap="ProvRegistrationImageVoMap">
+        SELECT id, certificate_id, file_path, version
+        FROM prov_registration_image
+        WHERE prov_id = #{provId} and certificate_id = #{certId}
+    </select>
+
+    <resultMap id="ProvGoodsInfo4CertVoBaseResultMap" type="gyqx.spdhdi.mycerts.vo.ProvGoodsInfo4CertVo">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="name" property="name" jdbcType="VARCHAR"/>
+    </resultMap>
+    <select id="getGoodsInfo" resultMap="ProvGoodsInfo4CertVoBaseResultMap" databaseId="oracle">
+        SELECT id,goods_name||' ['|| goods_gg||']' as name
+        FROM prov_goods_info
+        WHERE prov_id = #{provId} and mfrs_id = #{mfrsId}
+    </select>
+    
+    <select id="getGoodsInfo" resultMap="ProvGoodsInfo4CertVoBaseResultMap" databaseId="mysql">
+        SELECT id,CONCAT(goods_name,' [', goods_gg,']') as name
+        FROM prov_goods_info
+        WHERE prov_id = #{provId} and mfrs_id = #{mfrsId}
+    </select>
+    
+    <select id="getSelectedGoods" resultMap="ProvGoodsInfo4CertVoBaseResultMap" databaseId="oracle">
+        SELECT g.id, goods_name||' ['|| goods_gg||']' as name
+        FROM prov_regist_goods p
+        LEFT OUTER JOIN prov_goods_info g ON p.goods_id = g.id AND p.prov_id = g.prov_id
+        WHERE p.prov_id = #{provId} and p.certificate_id = #{certId} and g.mfrs_id = #{mfrsId}
+    </select>
+    
+    <select id="getSelectedGoods" resultMap="ProvGoodsInfo4CertVoBaseResultMap" databaseId="mysql">
+        SELECT g.id, CONCAT(goods_name,' [', goods_gg,']') as name
+        FROM prov_regist_goods p
+        LEFT OUTER JOIN prov_goods_info g ON p.goods_id = g.id AND p.prov_id = g.prov_id
+        WHERE p.prov_id = #{provId} and p.certificate_id = #{certId} and g.mfrs_id = #{mfrsId}
+    </select>
+    
+    <select id="listProvRegistGoodsId" resultType="java.lang.String">
+        SELECT goods_id FROM prov_regist_goods WHERE prov_id=#{provId} AND certificate_id=#{certId}
+    </select>
+</mapper>

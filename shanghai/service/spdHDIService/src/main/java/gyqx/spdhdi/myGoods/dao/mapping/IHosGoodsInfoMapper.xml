@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 引入接口，只要实现接口的方法就会调用对应接口方法的 select id -->
+<mapper namespace="gyqx.spdhdi.myGoods.dao.mapper.IHosGoodsInfoMapper">
+	<!-- parameterType传入参数类型 resultMap=自己定义的一个返回类型 resultType返回类型 -->
+	<select id="getHosGoodsInfoList" resultMap="bHosGoodsVoMap"
+		parameterType="gyqx.spdhdi.po.HosGoodsInfo">
+
+		   select m.mfrs_name as mfrsName,hg.* from  hos_goods_info  hg
+	 left   JOIN bas_mfrs_info m
+	    on hg.mfrs_id = m.id
+		<where>
+			1=1
+			<if test='goodsName != null and goodsName !=""'>
+			 <bind name="goodsName" value="'%' + goodsName + '%'" />
+				and
+				(
+					hg.goods_name LIKE  #{goodsName}
+					or hg.short_pinyin LIKE  #{goodsName}
+					or hg.goods_gg LIKE  #{goodsName}
+				)
+
+			</if>
+			<if test='hosId != null and hosId !=""'>
+
+				and hg.hos_id = #{hosId}
+
+			</if>
+			<if test='kindCode != null and kindCode !=""'>
+
+				and hg.kind_code = #{kindCode}
+
+			</if>
+			<if test='flag != null and flag !=""'>
+
+				and hg.flag = #{flag}
+
+			</if>
+			order by hg.id
+		</where>
+	</select>
+
+	<select id="listHosGoods4CodeMgr" resultMap="bHosGoodsVoMap"
+		parameterType="gyqx.spdhdi.po.HosGoodsInfo">
+
+	 select m.mfrs_name as mfrsName,hg.*
+	    from hos_goods_info  hg
+	    left JOIN bas_mfrs_info m on hg.mfrs_id = m.id
+		<where>
+			hg.flag=1
+			<if test='goodsName != null and goodsName !=""'>
+			 <bind name="goodsName" value="'%' + goodsName + '%'" />
+				and
+				(
+					hg.goods_name LIKE  #{goodsName}
+					or hg.short_pinyin LIKE  #{goodsName}
+					or hg.goods_gg LIKE  #{goodsName}
+				)
+
+			</if>
+			<if test='hosId != null and hosId !=""'>
+
+				and hg.hos_id = #{hosId}
+
+			</if>
+			<if test='provId != null and provId !=""'>
+				and hg.prov_Id = #{provId}
+			</if>
+			<if test='provId==null || provId==""'>
+				and hg.prov_Id is null
+			</if>
+			order by hg.id
+		</where>
+	</select>
+
+	<!-- 批量更新科室产品的采购模式 -->
+	<update id="batchUpdateDeptGoodsPurMode">
+        UPDATE dept_goods_info t
+		SET t.pur_mode = #{purMode}
+		WHERE
+			hos_id = #{hosId}
+		AND goods_id = #{goodsId}
+    </update>
+	<!-- 批量更新阳光编码 -->
+	<update id="updateHitCodeByBatch" parameterType="java.util.List" databaseId="mysql">
+		<foreach collection="list" item="item" index="index" open=""
+				 close="" separator=";">
+			update hos_goods_info
+			<set>
+				<if test='item.hitCode != null'>
+					hit_code = #{item.hitCode},
+				</if>
+					last_update_datetime = sysdate(),
+				version=version+1
+			</set>
+			where id = #{item.id}
+		</foreach>
+	</update>
+	<update id="updateHitCodeByBatch" parameterType="java.util.List" databaseId="oracle">
+		<foreach collection="list" item="item" index="index" open="begin"
+				 close=";end;" separator=";">
+			update hos_goods_info
+			<set>
+				<if test='item.hitCode != null'>
+					hit_code = #{item.hitCode},
+				</if>
+				last_update_datetime = sysdate,
+				version=version+1
+			</set>
+			where id = #{item.id}
+		</foreach>
+	</update>
+	<resultMap type="gyqx.spdhdi.myGoods.vo.HosGoodsInfoVo" id="bHosGoodsVoMap">
+		<id property="id" column="id"/>
+		<result property="hosId" column="hos_id"/>
+		<result property="code"  column="code"/>
+		<result property="goodsName"  column="goods_name"/>
+		<result property="shortPinyin"  column="short_pinyin"/>
+		<result property="goodsGg"  column="goods_gg"/>
+		<result property="brand"  column="brand"/>
+		<result property="made"  column="made"/>
+		<result property="mfrsId"  column="mfrs_id"/>
+		<result property="unit"  column="unit"/>
+		<result property="packeage"  column="packeage"/>
+		<result property="price"  column="price"/>
+		<result property="masterCode"  column="master_code"/>
+	    <result property="mfrsCode"  column="mfrs_code"/>
+		<result property="kindCode"  column="kind_code"/>
+		<result property="kind68code"  column="kind_68code"/>
+		<result property="erpCode"  column="erp_code"/>
+		<result property="spdGoodsCode"  column="spd_goods_code"/>
+		<result property="fieldCode2" column="field_code2"/>
+		<result property="fieldCode3" column="field_code3"/>
+		<result property="fieldCode4" column="field_code4"/>
+		<result property="lbsx" column="lbsx"/>
+		<result property="remark" column="remark"/>
+		<result property="flag" column="flag"/>
+		<result property="uid" column="uxid"/>
+		<result property="fillDate" column="fill_date"/>
+		<result property="lastUpdateDatetime" column="last_update_datetime"/>
+		<result property="version" column="version"/>
+		<result property="hosMfrsName" column="hos_mfrs_name"/>
+		<result property="uniqueCodeStrategy" column="unique_code_strategy"/>
+		<result property="taxRate" column="tax_rate"/>
+		<result property="hitCode" column="hit_code"/>
+		<result property="hitPrice" column="hit_price"/>
+		<result property="hisPrice" column="his_price"/>
+		<result property="mfrsName" column="mfrsName"/>
+		<result property="provId" column="prov_id"/>
+		<result property="charging" column="charging"/>
+		<result property="goodsDesc" column="goods_desc"/>
+		<result property="generalName" column="general_name"/>
+		<result property="purMode" column="pur_mode"/>
+		<result property="isMetering" column="is_metering"/>
+	</resultMap>
+
+</mapper>

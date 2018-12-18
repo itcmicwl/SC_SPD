@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="gyqx.spdhdi.mycerts.dao.mapper.ProvFrwtsMapper">
+    <resultMap id="WtrUserInfoVoBaseResultMap" type="gyqx.spdhdi.mycerts.vo.WtrUserInfoVo">
+        <id column="user_id" property="id" jdbcType="VARCHAR"/>
+        <result column="ename" property="wtrName" jdbcType="VARCHAR"/>
+        <result column="tel" property="wtrPhone" jdbcType="VARCHAR"/>
+    </resultMap>
+    <resultMap id="ProvFrwtsVoBaseResultMap" type="gyqx.spdhdi.mycerts.vo.ProvFrwtsVo">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="prov_id" property="provId" jdbcType="VARCHAR"/>
+        <result column="hos_id" property="hosId" jdbcType="VARCHAR"/>
+        <result column="hos_name" property="hosName" jdbcType="VARCHAR"/>
+        <result column="prov_name" property="provName" jdbcType="VARCHAR"/>
+        <result column="wtr_id" property="wtrId" jdbcType="VARCHAR"/>
+        <result column="wtr_name" property="wtrName" jdbcType="VARCHAR"/>
+        <result column="wtr_phone" property="wtrPhone" jdbcType="VARCHAR"/>
+        <result column="file_path_wts" property="filePathWts" jdbcType="VARCHAR"/>
+        <result column="file_path_wtr" property="filePathWtr" jdbcType="VARCHAR"/>
+        <result column="expdt_begin_date" property="expdtBeginDate" jdbcType="TIMESTAMP"/>
+        <result column="expdt_end_date" property="expdtEndDate" jdbcType="TIMESTAMP"/>
+        <result column="version" property="version" jdbcType="INTEGER"/>
+    </resultMap>
+    <select id="getHosList"
+            resultMap="BasCompanyInfoJxsqsVoBaseResultMap">
+        <if test="hosName != ''">
+            <bind name="name" value="'%'+hosName+'%'"/>
+        </if>
+        select id, cname
+        from bas_company_info
+        where kind = 1 and flag != 0
+        <if test="hosName != ''">
+            and (cname like #{name} or short_pinyin like #{name})
+        </if>
+    </select>
+    <select id="getWtrInfo" resultMap="WtrUserInfoVoBaseResultMap">
+        select
+            uo.ename,
+            tel,
+            user_id
+        from
+            sys_user_org uo
+            join
+                sys_org o on o.code = uo.org_code
+        where
+            o.corp_id = #{provId}
+    </select>
+    <select id="getFrwts" resultMap="ProvFrwtsVoBaseResultMap">
+        SELECT f.id,
+		       f.prov_id,
+		       f.hos_id,
+		       prov.cname         as prov_name,
+		       hos.cname          as hos_name,
+		       f.wtr_id,
+		       f.wtr_move_num     as wtr_phone,
+		       f.file_path_wts,
+		       f.file_path_wtr,
+		       f.expdt_begin_date,
+		       f.expdt_end_date,
+		       f.version
+		  FROM prov_frwts f
+		  LEFT OUTER JOIN bas_company_info hos
+		    ON f.hos_id = hos.id
+		  LEFT OUTER JOIN bas_company_info prov
+		    ON f.prov_id = prov.id
+        <where>
+        	<if test="corpType == '1'">
+	        	f.hos_id = #{corpId}
+	        </if>
+	        <if test="corpType != '1'">
+	        	(f.hos_id = #{corpId}
+	        	or f.prov_id = #{corpId})
+	        </if>
+	        <if test="start != null">
+	            and f.expdt_begin_date &gt;= #{start}
+	        </if>
+	        <if test="end != null">
+	            and f.expdt_end_date &lt;= #{end}
+	        </if>
+	        <if test="name != '' and name != null">
+	        	<bind name="name" value="'%'+name+'%'"/>
+	            and (hos.cname like #{name} or hos.short_pinyin like #{name})
+	        </if>
+	        <if test="provName != '' and provName != null">
+	        	<bind name="provName" value="'%'+provName+'%'"/>
+	            and (prov.cname like #{provName} or prov.short_pinyin like #{provName})
+	        </if>
+       	</where>
+    </select>
+
+    <select id="getFrwtsByProv" resultMap="ProvFrwtsVoBaseResultMap">
+        SELECT
+        f.id,
+        f.prov_id,
+        f.hos_id,
+        hos.cname as hos_name,
+        prov.cname as prov_name,
+        f.wtr_id,
+        uo.ename as wtr_name,
+        f.wtr_move_num as wtr_phone,
+        f.file_path_wts,
+        f.file_path_wtr,
+        f.expdt_begin_date,
+        f.expdt_end_date,
+        f.version
+        FROM
+        prov_frwts f
+        LEFT OUTER JOIN bas_company_info hos ON f.hos_id = hos.id
+        LEFT OUTER JOIN bas_company_info prov ON f.prov_id = prov.id
+        LEFT OUTER JOIN sys_user_org uo ON uo.user_id = f.wtr_id
+        WHERE
+        f.prov_id = #{compId}
+        and hos.kind = 1
+        and hos.flag != 0
+
+        <if test="start != null and end != null and start gte end">
+            and f.expdt_end_date <![CDATA[ <= ]]> #{end}
+        </if>
+        <if test="start != null and end != null and start lt end">
+            and f.expdt_end_date <![CDATA[ <= ]]> #{end} and  f.expdt_end_date <![CDATA[ > ]]>  #{start}
+        </if>
+        <if test="aboutName != '' and aboutName != null">
+            <bind name="searchName" value="'%'+aboutName+'%'"/>
+            and (hos.cname like #{searchName} or uo.ename like  #{searchName} or hos.short_pinyin like #{searchName})
+        </if>
+
+        order by hos.cname
+
+    </select>
+
+    <select id="getFrwtsByHos" resultMap="ProvFrwtsVoBaseResultMap">
+        SELECT
+        f.id,
+        f.prov_id,
+        f.hos_id,
+        hos.cname as hos_name,
+        prov.cname as prov_name,
+        f.wtr_id,
+        uo.ename as wtr_name,
+        f.wtr_move_num as wtr_phone,
+        f.file_path_wts,
+        f.file_path_wtr,
+        f.expdt_begin_date,
+        f.expdt_end_date,
+        f.version
+        FROM
+        prov_frwts f
+        LEFT OUTER JOIN bas_company_info hos ON f.hos_id = hos.ID
+        LEFT OUTER JOIN bas_company_info prov ON f.prov_id = prov.ID
+        LEFT OUTER JOIN sys_user_org uo ON uo.user_id = f.wtr_id
+        WHERE
+        f.hos_id = #{compId}
+        and (prov.kind = 2 or prov.kind = 4)
+        and prov.flag != 0
+        <if test="start != null and end != null and start gte end">
+            and f.expdt_end_date <![CDATA[ <= ]]> #{end}
+        </if>
+        <if test="start != null and end != null and start lt end">
+            and f.expdt_end_date <![CDATA[ <= ]]> #{end} and  f.expdt_end_date <![CDATA[ > ]]>  #{start}
+        </if>
+        <if test="aboutName != '' and aboutName != null">
+            <bind name="searchName" value="'%'+aboutName+'%'"/>
+            and (prov.cname like #{searchName} or uo.ename like  #{searchName} or prov.short_pinyin like #{searchName})
+        </if>
+
+        order by prov.cname
+    </select>
+
+
+    <resultMap id="BasCompanyInfoJxsqsVoBaseResultMap" type="gyqx.spdhdi.mycerts.vo.BasCompanyInfoJxsqsVo">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="cname" property="hosName" jdbcType="VARCHAR"/>
+    </resultMap>
+</mapper>

@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:camel="http://camel.apache.org/schema/spring"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+      	 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd  
+           http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+           http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+	
+<!-- 	<bean id="to" class="oracle.jdbc.pool.OracleConnectionPoolDataSource" destroy-method="close"> -->
+<!-- 	    <property name="URL" value="${to.oracle.url}" /> -->
+<!-- 	    <property name="user" value="${to.oracle.username}" /> -->
+<!-- 	    <property name="password" value="${to.oracle.password}" /> -->
+<!-- 	    <property name="connectionCacheProperties"> -->
+<!-- 	        <props merge="default"> -->
+<!-- 	            <prop key="MinLimit">5</prop> -->
+<!-- 	            <prop key="MaxLimit">50</prop> -->
+<!-- 	        </props> -->
+<!-- 	    </property> -->
+<!-- 	</bean> -->	
+	
+	<bean id="from" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">  
+	    <property name="driverClassName" value="com.mysql.jdbc.Driver" />  
+	    <property name="url" value="${from.mysql.url}" />  
+	    <property name="username" value="${from.mysql.username}" />
+	    <property name="password" value="${from.mysql.password}" />
+	     <property name="initialSize" value="5"/>
+	     <property name="maxTotal" value="200"/>
+	     <property name="maxIdle" value="10"/>
+	     <property name="minIdle" value="10"/>
+	     <property name="validationQuery" value="SELECT 1"></property>
+		 <property name="testWhileIdle" value="true"></property>
+		 <property name="testOnBorrow" value="true"></property>
+	</bean> 
+	<bean id="fromMeta" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">  
+	    <property name="driverClassName" value="com.mysql.jdbc.Driver" />  
+	    <property name="url" value="${from.meta.mysql.url}" />  
+	    <property name="username" value="${from.mysql.username}" />
+	    <property name="password" value="${from.mysql.password}" />
+	     <property name="initialSize" value="5"/>
+	     <property name="maxTotal" value="200"/>
+	     <property name="maxIdle" value="10"/>
+	     <property name="minIdle" value="10"/>
+	     <property name="validationQuery" value="SELECT 1"></property>
+		 <property name="testWhileIdle" value="true"></property>
+		 <property name="testOnBorrow" value="true"></property>
+	</bean> 
+	
+<!-- 	<bean id="to" class="org.apache.commons.dbcp2.BasicDataSource" destroy-method="close">   -->
+<!-- 	    <property name="driverClassName" value="com.mysql.jdbc.Driver" />   -->
+<!-- 	    <property name="url" value="${to.mysql.url}" />   -->
+<!-- 	    <property name="username" value="${to.mysql.username}" /> -->
+<!-- 	    <property name="password" value="${to.mysql.password}" /> -->
+<!-- 	     <property name="initialSize" value="5"/> -->
+<!-- 	     <property name="maxTotal" value="200"/> -->
+<!-- 	     <property name="maxIdle" value="10"/> -->
+<!-- 	     <property name="minIdle" value="10"/> -->
+<!-- 	     <property name="validationQuery" value="SELECT 1"></property> -->
+<!-- 		 <property name="testWhileIdle" value="true"></property> -->
+<!-- 		 <property name="testOnBorrow" value="true"></property> -->
+<!-- 	</bean>  -->
+	<bean id="to" class="oracle.jdbc.pool.OracleConnectionPoolDataSource" destroy-method="close">
+	    <property name="URL" value="${to.oracle.url}" />
+	    <property name="user" value="${to.oracle.username}" />
+	    <property name="password" value="${to.oracle.password}" />
+	    <property name="connectionCacheProperties">
+	        <props merge="default">
+	            <prop key="MinLimit">5</prop>
+	            <prop key="MaxLimit">50</prop>
+	        </props>
+	    </property>
+	</bean>
+    
+    <bean id="txTo" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">    
+        <property name="dataSource" ref="to"/>  
+    </bean>
+
+    <bean id="txFrom" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">    
+        <property name="dataSource" ref="from"/>  
+    </bean>  
+
+    
+    <bean id="config.dbsources" class="gyqx.txp.configuration.DbSources">
+    	<property name="dbSourceMap">
+    		<map>
+    			<entry key="to" value-ref="to" /> 
+    			<entry key="from" value-ref="from" /> 
+    			<entry key="fromMeta" value-ref="fromMeta" /> 
+    		</map>
+    	</property>
+    	
+    	<property name="dbTypeMap">
+    		<map>
+    			<entry key="to" value="oracle" /> 
+    			<entry key="from" value="mysql" /> 
+    		</map>
+    	</property>
+    	
+    	<property name="transacationManagerMap">
+    		<map>
+    			<entry key="to" value-ref="txTo" /> 
+    			<entry key="from" value-ref="txFrom" /> 
+    		</map>
+    	</property>
+    </bean>
+</beans>

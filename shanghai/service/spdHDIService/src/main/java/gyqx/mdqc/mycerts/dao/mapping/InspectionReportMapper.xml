@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="gyqx.mdqc.mycerts.dao.mapper.InspectionReportMapper">
+    <insert id="addReport">
+        INSERT INTO INSPECTION_REPORT (ID, PROV_ID, MFRS_NAME, FILLER, LAST_UPDATE_DATETIME, VERSION, MFRS_NAME_PINYIN)
+        VALUES (#{vo.id}, #{vo.provId}, #{vo.mfrsName}, #{vo.filler}, SYSDATE, 0, #{vo.mfrsNamePinyin})
+    </insert>
+    <insert id="addReportSub">
+        INSERT INTO INSPECTION_REPORT_SUB (ID, PID, GOODS_NAME, GOODS_GG, LOT, FILLER, LAST_UPDATE_DATETIME, VERSION, GOODS_NAME_PINYIN)
+        <foreach collection="list" item="item" separator="UNION ALL">
+            (SELECT #{item.id}, #{item.pid}, #{item.goodsName}, #{item.goodsSpec}, #{item.lot}, #{item.filler}, SYSDATE, 0, #{item.goodsNamePinyin} FROM DUAL)
+        </foreach>
+    </insert>
+    <insert id="addReportImg">
+        INSERT INTO INSPECTION_REPORT_IMAGE (ID, PID, PATH, FILLER, LAST_UPDATE_DATETIME, VERSION)
+        <foreach collection="list" item="item" separator="UNION ALL">
+            (SELECT #{item.id}, #{item.pid}, #{item.path}, #{item.filler}, SYSDATE, 0 FROM DUAL)
+        </foreach>
+    </insert>
+    <delete id="delReport">
+        DELETE FROM INSPECTION_REPORT WHERE ID = #{id} AND VERSION = #{version} AND PROV_ID = #{corpId}
+    </delete>
+    <delete id="delReportSub">
+        DELETE FROM INSPECTION_REPORT_SUB WHERE PID = #{id}
+    </delete>
+    <delete id="delReportImg">
+        DELETE FROM INSPECTION_REPORT_IMAGE WHERE PID = #{id}
+    </delete>
+    <select id="listProvReport" resultMap="ReportVoResultMap">
+        SELECT ir.ID, ir.MFRS_NAME, ir.VERSION, iri.IMG_NUM,
+               irs.ID AS sub_ID, irs.GOODS_NAME AS sub_GOODS_NAME, irs.GOODS_GG AS sub_GOODS_SPEC, irs.VERSION AS sub_VERSION, irs.LOT AS sub_LOT
+        FROM INSPECTION_REPORT ir
+               LEFT OUTER JOIN INSPECTION_REPORT_SUB irs ON irs.PID = ir.ID
+               LEFT OUTER JOIN (SELECT PID, count(0) AS IMG_NUM FROM INSPECTION_REPORT_IMAGE GROUP BY PID) iri ON iri.PID = ir.ID
+        <where>
+          ir.PROV_ID = #{corpId}
+            <if test="params.get('mfrsName') != null and params.get('mfrsName') != ''">
+                <bind name="mfrsName" value="'%'+params.get('mfrsName')+'%'"/>
+                AND (ir.MFRS_NAME LIKE #{mfrsName} OR ir.MFRS_NAME_PINYIN LIKE #{mfrsName})
+            </if>
+            <if test="params.get('goodsName') != null and params.get('goodsName') != ''">
+                <bind name="goodsName" value="'%'+params.get('goodsName')+'%'"/>
+                AND (irs.GOODS_NAME LIKE #{goodsName} OR irs.GOODS_NAME_PINYIN LIKE #{goodsName})
+            </if>
+            <if test="params.get('goodsSpec') != null and params.get('goodsSpec') != ''">
+                <bind name="goodsSpec" value="'%'+params.get('goodsSpec')+'%'"/>
+                AND irs.GOODS_GG LIKE #{goodsSpec}
+            </if>
+            <if test="params.get('lot') != null and params.get('lot') != ''">
+                <bind name="lot" value="'%'+params.get('lot')+'%'"/>
+                AND irs.LOT LIKE #{lot}
+            </if>
+        </where>
+        ORDER BY irs.GOODS_NAME, ir.MFRS_NAME
+    </select>
+
+    <select id="listHosReport" resultMap="ReportVoResultMap">
+        SELECT ir.ID, ir.MFRS_NAME, ir.VERSION, bci.CNAME AS PROV_NAME, iri.IMG_NUM,
+                irs.ID AS sub_ID, irs.GOODS_NAME AS sub_GOODS_NAME, irs.GOODS_GG AS sub_GOODS_SPEC, irs.VERSION AS sub_VERSION, irs.LOT AS sub_LOT
+        FROM INSPECTION_REPORT ir
+                LEFT OUTER JOIN INSPECTION_REPORT_SUB irs ON irs.PID = ir.ID
+                LEFT OUTER JOIN (SELECT PID, count(0) AS IMG_NUM FROM INSPECTION_REPORT_IMAGE GROUP BY PID) iri ON iri.PID = ir.ID
+                INNER JOIN BAS_COMPANY_INFO bci ON ir.PROV_ID = bci.ID
+        <where>
+            <if test="params.get('provId') != null and params.get('provId') != ''">
+                ir.PROV_ID = #{params.provId}
+            </if>
+            <if test="params.get('mfrsName') != null and params.get('mfrsName') != ''">
+                <bind name="mfrsName" value="'%'+params.get('mfrsName')+'%'"/>
+                AND (ir.MFRS_NAME LIKE #{mfrsName} OR ir.MFRS_NAME_PINYIN LIKE #{mfrsName})
+            </if>
+            <if test="params.get('goodsName') != null and params.get('goodsName') != ''">
+                <bind name="goodsName" value="'%'+params.get('goodsName')+'%'"/>
+                AND (irs.GOODS_NAME LIKE #{goodsName} OR irs.GOODS_NAME_PINYIN LIKE #{goodsName})
+            </if>
+            <if test="params.get('goodsSpec') != null and params.get('goodsSpec') != ''">
+                <bind name="goodsSpec" value="'%'+params.get('goodsSpec')+'%'"/>
+                AND irs.GOODS_GG LIKE #{goodsSpec}
+            </if>
+            <if test="params.get('lot') != null and params.get('lot') != ''">
+                <bind name="lot" value="'%'+params.get('lot')+'%'"/>
+                AND irs.LOT LIKE #{lot}
+            </if>
+        </where>
+        ORDER BY irs.GOODS_NAME, ir.MFRS_NAME
+    </select>
+    <select id="listReportAttachment" resultType="java.lang.String" >
+        SELECT iri.PATH
+        FROM INSPECTION_REPORT ir
+               LEFT OUTER JOIN INSPECTION_REPORT_IMAGE iri ON iri.PID = ir.ID
+        WHERE
+             ir.ID = #{id} AND ir.VERSION = #{version}
+             <if test="corpId != null">
+                 AND ir.PROV_ID = #{corpId}
+             </if>
+    </select>
+
+    <resultMap id="ReportVoResultMap" type="gyqx.mdqc.mycerts.vo.InspectionReportVo" autoMapping="true">
+        <id column="id" property="id"/>
+        <collection property="reportSubVoList" autoMapping="true" columnPrefix="sub_" ofType="gyqx.mdqc.mycerts.vo.InspectionReportSubVo">
+            <id property="id" column="id"/>
+        </collection>
+        <!--<collection property="reportImageVoList" autoMapping="true" columnPrefix="img_" ofType="gyqx.mdqc.mycerts.vo.InspectionReportImageVo">-->
+            <!--<id property="id" column="id"/>-->
+        <!--</collection>-->
+    </resultMap>
+</mapper>

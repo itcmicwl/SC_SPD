@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 引入接口，只要实现接口的方法就会调用对应接口方法的 select id -->
+<mapper namespace="gyqx.platform.sys.dao.mapper.ISysProjectMapper">
+	<!-- parameterType传入参数类型 resultMap=自己定义的一个返回类型 resultType返回类型 -->
+	<select id="getSysProjectList" resultType="gyqx.platform.sys.vo.SysProjectVo"
+		parameterType="gyqx.platform.po.SysProject">
+		select t.*,pt.cname pName from sys_project t left join sys_project pt
+		on t.pid = pt.id
+		<where>
+			<if test='cname != null and cname !=""'>
+				and t.cname like CONCAT('%',#{cname},'%')
+			</if>
+			<if test='pid != null and pid !="" and pid !="0"'>
+				and t.pid = #{pid}
+			</if>
+		</where>
+		order by t.id
+	</select>
+	<select id="getParentSysProList" resultType="gyqx.platform.po.SysProject">
+		select * from sys_project t
+		<where>
+			t.pid is null or t.pid =''
+		</where>
+		order by t.id
+	</select>
+	<select id="getSysProjectByid" resultType="gyqx.platform.po.SysProject">
+		select * from sys_project t
+		<where>
+			t.id = #{id}
+		</where>
+	</select>
+	<select id="existSysProject" resultType="java.lang.Integer">
+		select count(*) from sys_project t
+		<where>
+			<if test='ename != null and ename !=""'>
+				and t.ename =#{ename}
+			</if>
+			<if test='id != null and id !=""'>
+				and t.id  <![CDATA[<>]]>
+				#{id}
+			</if>
+		</where>
+	</select>
+	<insert id="insertSysProject" parameterType="gyqx.platform.po.SysProject">
+		INSERT INTO sys_project (id,pid,code,ename,cname,remark,uxid,mt,version)
+		 VALUES (#{id}, #{pid}, #{code}, #{ename}, #{cname},
+		#{remark},#{uid},
+		<if test="_databaseId == 'oracle'">
+			sysdate,
+		</if>
+		<if test="_databaseId == 'mysql'">
+			sysdate(),
+		</if>
+		0)
+	</insert>
+
+	<update id="setSysProject" parameterType="gyqx.platform.po.SysProject">
+		update sys_project set
+		<if test='pid != null'>
+			pid = #{pid} ,
+		</if>
+		<if test='code != null'>
+			code = #{code},
+		</if>
+		<if test='ename != null'>
+			ename = #{ename},
+		</if>
+		<if test='cname != null'>
+			cname = #{cname},
+		</if>
+		<if test='remark != null'>
+			remark = #{remark},
+		</if>
+		<if test='uid != null and uid !=""'>
+			uxid = #{uid},
+		</if>
+		version = version+1,
+		mt = #{mt}
+		where id=#{id}
+	</update>
+
+	<delete id="delSysProjectByCode">
+		DELETE FROM sys_project WHERE code like CONCAT(#{code},'%')
+	</delete>
+</mapper>

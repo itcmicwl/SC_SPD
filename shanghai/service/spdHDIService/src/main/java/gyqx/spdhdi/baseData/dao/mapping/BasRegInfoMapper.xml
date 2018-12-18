@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="gyqx.spdhdi.baseData.dao.mapper.BasRegInfoMapper">
+    <resultMap id="BaseResultMap" type="gyqx.spdhdi.po.BasMfrsCertificate">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="mfrs_id" property="mfrsId" jdbcType="VARCHAR"/>
+        <result column="cert_kind" property="certKind" jdbcType="VARCHAR"/>
+        <result column="cert_code" property="certCode" jdbcType="VARCHAR"/>
+        <result column="expdt_begin_date" property="expdtBeginDate" jdbcType="TIMESTAMP"/>
+        <result column="expdt_end_date" property="expdtEndDate" jdbcType="TIMESTAMP"/>
+        <result column="is_validing" property="isValiding" jdbcType="CHAR"/>
+        <result column="uxid" property="uid" jdbcType="VARCHAR"/>
+        <result column="fill_date" property="fillDate" jdbcType="TIMESTAMP"/>
+        <result column="last_update_datetime" property="lastUpdateDatetime" jdbcType="TIMESTAMP"/>
+        <result column="version" property="version" jdbcType="INTEGER"/>
+    </resultMap>
+    <resultMap id="VoBaseResultMap" type="gyqx.spdhdi.baseData.vo.BasMfrsCertificateVo">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="mfrs_id" property="mfrsId" jdbcType="VARCHAR"/>
+        <result column="cert_kind" property="certKind" jdbcType="VARCHAR"/>
+        <result column="cert_code" property="certCode" jdbcType="VARCHAR"/>
+        <result column="expdt_begin_date" property="expdtBeginDate" jdbcType="TIMESTAMP"/>
+        <result column="expdt_end_date" property="expdtEndDate" jdbcType="TIMESTAMP"/>
+        <result column="is_validing" property="isValiding" jdbcType="CHAR"/>
+        <result column="version" property="version" jdbcType="INTEGER"/>
+    </resultMap>
+    <resultMap id="BasRegistrationInfoVoBaseResultMap" type="gyqx.spdhdi.baseData.vo.BasRegInfoVo">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="reg_kind" property="regKind" jdbcType="VARCHAR"/>
+        <result column="product_name" property="productName" jdbcType="VARCHAR"/>
+        <result column="certificate_code" property="certificateCode" jdbcType="VARCHAR"/>
+        <result column="mfrs_id" property="mfrsId" jdbcType="VARCHAR"/>
+        <result column="mfrs_name" property="mfrsName" jdbcType="VARCHAR"/>
+        <result column="expdt_begin_date" property="expdtBeginDate" jdbcType="TIMESTAMP"/>
+        <result column="expdt_end_date" property="expdtEndDate" jdbcType="TIMESTAMP"/>
+        <result column="is_old_info" property="isOldInfo" jdbcType="VARCHAR"/>
+        <result column="last_update_datetime" property="lastUpdateDatetime" jdbcType="TIMESTAMP"/>
+        <result column="version" property="version" jdbcType="INTEGER"/>
+    </resultMap>
+    <select id="getBasRegCerts" resultMap="BasRegistrationInfoVoBaseResultMap">
+        SELECT br.*,bm.mfrs_name from bas_registration_info br left JOIN bas_mfrs_info bm
+		on br.mfrs_id = bm.id
+		<where>
+			<if test="mfrsName != null and mfrsName != ''">
+                <bind name="name" value="'%'+mfrsName+'%'"/>
+                and mfrs_name like #{mfrsName}
+            </if>
+			<if test="productName != null and productName != ''">
+                <bind name="name" value="'%'+productName+'%'"/>
+                and product_name like #{productName}
+            </if>
+			<if test="certificateCode != null and certificateCode != ''">
+                <bind name="name" value="'%'+certificateCode+'%'"/>
+                and mfrs_name like #{certificateCode}
+            </if>
+		</where>
+    </select>
+    <select id="getCerts" resultMap="BasRegistrationInfoVoBaseResultMap">
+        SELECT
+        	id, reg_kind, product_name, certificate_code, mfrs_id, expdt_begin_date, expdt_end_date, version
+        FROM
+        	bas_registration_info
+        WHERE
+        	mfrs_id = #{mfrsId} AND is_old_info = '0'
+    </select>
+    <resultMap id="voBasMfrsInfoResultMap" type="gyqx.spdhdi.baseData.vo.BasMfrsInfoVo">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="mfrs_name" property="mfrsName" jdbcType="VARCHAR"/>
+    </resultMap>
+    <select id="getMfrsInfoLikeName" resultMap="voBasMfrsInfoResultMap">
+        SELECT
+        id, mfrs_name
+        FROM
+        bas_mfrs_info
+        <where>
+            flag != '0'
+            <if test="mfrsName != null and mfrsName != ''">
+                <bind name="name" value="'%'+mfrsName+'%'"/>
+                and mfrs_name like #{name}
+            </if>
+        </where>
+    </select>
+    <select id="getCompanyInfoLikeName" resultMap="voBasMfrsInfoResultMap">
+        SELECT
+        id, cname as mfrs_name
+        FROM
+        bas_company_info
+        <where>
+            flag != '0' and kind = '2'
+            <if test="name != null and name != ''">
+                <bind name="coName" value="'%'+name+'%'"/>
+                and cname like #{coName}
+            </if>
+        </where>
+    </select>
+</mapper>

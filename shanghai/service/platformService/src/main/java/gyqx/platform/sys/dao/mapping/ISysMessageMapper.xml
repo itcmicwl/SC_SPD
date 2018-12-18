@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="gyqx.platform.sys.dao.mapper.ISysMessageMapper"> 
+	<sql id="baseSelect">
+		select sm.*,smc.user_id
+		from sys_message_confirm smc left join sys_message sm on smc.message_id=sm.id
+	</sql>
+	<select id="list"  resultMap="sysMessageMap" parameterType="gyqx.platform.sys.vo.SysMessageVo">
+		<include refid="baseSelect"></include>
+		<where>
+			<if test='id != null and id !=""'>
+				and sm.id=#{id}
+			</if>
+			<if test='userId != null and userId !=""'>
+				and smc.user_id=#{userId}
+			</if>
+			<if test='projectCode != null and projectCode !=""'>
+				and sm.project_code=#{projectCode}
+			</if>
+			<if test='readDatetimeStart == null and readDatetimeEnd == null'>
+				and smc.read_datetime is null
+			</if>
+			<if test='readDatetimeStart != null'>
+				<![CDATA[ and smc.read_datetime >= #{readDatetimeStart} ]]>
+
+			</if>
+			<if test='readDatetimeEnd != null'>
+				<![CDATA[ and smc.read_datetime <= #{readDatetimeEnd} ]]>
+			</if>
+		</where>
+	</select>
+    <select id="listUsersMsg" resultMap="sysMessageMap">
+		select smc.message_id AS id, smc.user_id, sm.range_type, sm.message, sm.title, sm.project_code, sm.url,
+		sm.group_id, sm.write_datetime, sm.write_user_id, sm.version
+		from sys_message_confirm smc
+				 left join sys_message sm on smc.message_id=sm.id
+		where sm.project_code=#{projectCode}
+		<if test="beginDate != null">
+			<![CDATA[ and sm.write_datetime >= #{beginDate} ]]>
+		</if>
+		<if test="endDate != null">
+			<![CDATA[ and sm.write_datetime <= #{endDate} ]]>
+		</if>
+		<if test="!containsRead">
+			and smc.read_datetime is null
+		</if>
+		order by sm.write_datetime desc
+	</select>
+    <resultMap type="gyqx.platform.sys.vo.SysMessageVo" id="sysMessageMap">
+		<id property="id" column="id"/>
+		<result property="projectCode"  column="project_code"/>
+		<result property="userId"  column="user_id"/>
+		<result property="rangeType"  column="range_type"/>
+		<result property="message"  column="message"/>
+		<result property="title"  column="title"/>
+		<result property="url"  column="url"/>
+		<result property="groupId"  column="group_id"/>
+		<result property="writeDatetime"  column="write_datetime"/>
+		<result property="writeUserId"  column="write_user_id"/>
+		<result property="version"  column="version"/>
+	</resultMap>
+	<update id="update" parameterType="gyqx.platform.po.SysMessage" >
+		update sys_message
+		<set>
+			<if test='rangeType != null'>  
+				range_type = #{rangeType},
+			</if> 
+			<if test='message != null'>  
+				message = #{message},
+			</if> 
+			<if test='title != null'>  
+				title = #{title},
+			</if> 
+			<if test='url != null'>  
+				url = #{url},
+			</if> 
+			<if test='groupId != null'>  
+				group_id = #{groupId},
+			</if> 
+			<if test='writeDatetime != null'>  
+				write_datetime = #{writeDatetime},
+			</if> 
+			<if test='writeUserId != null'>  
+				write_user_id = #{writeUserId},
+			</if> 
+			version=version+1,
+		</set>
+		<where>
+			and id = #{id}
+			and version= #{version}
+		</where>
+	</update>
+	<insert id="insert" parameterType="gyqx.platform.po.SysMessage" >
+		insert into sys_message 
+		( id , range_type , message , title , url , group_id , write_datetime , write_user_id , version  )
+		values (#{id},#{rangeType},#{message},#{title},#{url},#{groupId},#{writeDatetime},#{writeUserId},#{version})
+	</insert>
+</mapper>

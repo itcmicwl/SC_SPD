@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="gyqx.spdhdi.orderMgr.dao.mapper.IReturnBillMapper"> 
+<!-- parameterType传入参数类型     resultMap=自己定义的一个返回类型     resultType返回类型 -->
+	<select id="list"  resultMap="returnBillMap" parameterType="gyqx.spdhdi.po.ReturnBill">
+		<![CDATA[
+		select id,bill_id,fill_date,return_company_id,return_org_id,out_org_id,prov_id,distr_relation,fillter,memo,is_start_invoice,sum_row,status,balance_org_id,version from return_prov_bill
+		]]>
+		<where>
+			and id = #{id}
+		</where>
+	</select>
+ 	<resultMap type="gyqx.spdhdi.po.ReturnBill" id="returnBillMap">
+		<id property="id" column="id"/>
+		<result property="billId"  column="bill_id"/>
+		<result property="fillDate"  column="fill_date"/>
+		<result property="returnCompanyId"  column="return_company_id"/>
+		<result property="returnOrgId"  column="return_org_id"/>
+		<result property="outOrgId"  column="out_org_id"/>
+		<result property="provId"  column="prov_id"/>
+		<result property="distrRelation"  column="distr_relation"/>
+		<result property="fillter"  column="fillter"/>
+		<result property="memo"  column="memo"/>
+		<result property="isStartInvoice"  column="is_start_invoice"/>
+		<result property="sumRow"  column="sum_row"/>
+		<result property="status"  column="status"/>
+		<result property="balanceOrgId"  column="balance_org_id"/>
+		<result property="version"  column="version"/>
+	</resultMap> 
+	
+	<update id="update" parameterType="gyqx.spdhdi.po.ReturnBill" >
+		update return_prov_bill
+		<set>
+			<if test='billId != null'>  
+				bill_id = #{billId},
+			</if> 
+			<if test='fillDate != null'>  
+				fill_date = #{fillDate},
+			</if> 
+			<if test='returnCompanyId != null'>  
+				return_company_id = #{returnCompanyId},
+			</if> 
+			<if test='returnOrgId != null'>  
+				return_org_id = #{returnOrgId},
+			</if> 
+			<if test='outOrgId != null'>  
+				out_org_id = #{outOrgId},
+			</if> 
+			<if test='provId != null'>  
+				prov_id = #{provId},
+			</if> 
+			<if test='distrRelation != null'>  
+				distr_relation = #{distrRelation},
+			</if> 
+			<if test='fillter != null'>  
+				fillter = #{fillter},
+			</if> 
+			<if test='memo != null'>  
+				memo = #{memo},
+			</if> 
+			<if test='isStartInvoice != null'>  
+				is_start_invoice = #{isStartInvoice},
+			</if> 
+			<if test='sumRow != null'>  
+				sum_row = #{sumRow},
+			</if> 
+			<if test='status != null'>  
+				status = #{status},
+			</if> 
+			<if test='balanceOrgId != null'>  
+				balance_org_id = #{balanceOrgId},
+			</if>
+			<if test="_databaseId == 'mysql'">
+				last_update_datetime = sysdate(),
+			</if>
+			<if test="_databaseId == 'oracle'">
+				last_update_datetime = sysdate,
+			</if>
+			version=version+1,
+		</set>
+		<where>
+			and id = #{id}
+			and version= #{version}
+		</where>
+	</update>
+	
+	<select id="listReturnBillVo"  resultMap="returnBillVoMap" parameterType="gyqx.spdhdi.orderMgr.vo.ReturnBillVo">
+		<![CDATA[
+		select 
+		    rb.id,
+		    rb.bill_id as billId,
+		    rb.fill_date as fillDate,
+			rb.return_company_id as returnCompanyId,
+		    provH.cname as returnCompanyName,
+			provH.code  as return_company_code,
+			phc.erp_code as return_company_erp_code,
+			rb.return_org_id as returnOrgId,
+		    ro.cname as returnOrgName,
+		    ro.code as returnOrgCode,
+			ph_dept_c.erp_code as return_org_erp_code,
+			ro.scm_code as return_org_scm_code,
+			rb.out_org_id as outOrgId,
+		    oo.cname as outOrgName,
+		    oo.code as outOrgCode,
+			oo.scm_code as  out_org_scm_code,
+			ph_dept_c_out.erp_code as out_org_erp_code,
+			rb.prov_id as provId,
+		    provD.cname as provName,
+			provD.code as prov_code,
+			provD.erp_code as prov_erp_code,
+ 		    rb.distr_relation as distrRelation,
+		    rb.fillter,
+		    fillterUser.ename as fillterName,
+		    rb.memo,
+			rb.is_start_invoice as isStartInvoice,
+			rb.sum_row as sumRow,
+			rb.status,
+		 	rb.balance_org_id,
+		 	provB.cname as balance_org_name,
+		    rb.version
+       	from return_prov_bill rb
+        LEFT JOIN bas_company_info provH ON rb.return_company_id = provH.id
+        LEFT JOIN bas_company_info provD ON rb.prov_id = provD.id
+		LEFT JOIN sys_user_org fillterUser on fillterUser.user_id = rb.fillter
+		LEFT JOIN sys_org oo ON oo.id = rb.out_org_id 
+        LEFT JOIN sys_org ro ON ro.id = rb.return_org_id 
+        LEFT JOIN prov_hos_info_code phc on phc.prov_id = rb.prov_id and phc.hos_id = rb.return_company_id
+        LEFT JOIN prov_hos_dept_info_code ph_dept_c on ph_dept_c.prov_id =rb.prov_id and ph_dept_c.hos_id = rb.return_company_id and ph_dept_c.hos_dept_id =rb.return_org_id 
+        LEFT JOIN prov_hos_dept_info_code ph_dept_c_out on ph_dept_c_out.prov_id =rb.prov_id and ph_dept_c_out.hos_id = rb.return_company_id and ph_dept_c_out.hos_dept_id =rb.out_org_id 
+		LEFT JOIN bas_company_info provB ON rb.balance_org_id = provB.id
+		]]>
+		<where>		
+                   	1=1
+			<if test='billId != null and billId !=""'>
+				and rb.bill_id =#{billId}
+			</if>
+			<if test='returnCompanyId != null and returnCompanyId !=""'>
+				and rb.return_company_id =#{returnCompanyId}
+			</if>
+			<if test='status != null and status !=""'>
+				and rb.status =#{status}
+			</if>
+		    <if test='provId != null and provId !=""'>
+				and rb.prov_id =#{provId}
+			</if>
+		</where>
+	</select>
+	<resultMap type="gyqx.spdhdi.orderMgr.vo.ReturnBillVo" id="returnBillVoMap">
+		<result property="id"  column="id"/>
+		<result property="billId"  column="billId"/>
+		<result property="returnCompanyId"  column="returnCompanyId"/>
+		<result property="returnCompanyName"  column="returnCompanyName"/>
+		<result property="returnOrgId"  column="returnOrgId"/>
+		<result property="returnOrgName"  column="returnOrgName"/>
+		<result property="returnOrgCode"  column="returnOrgCode"/>
+		<result property="outOrgId"  column="outOrgId"/>
+		<result property="outOrgName"  column="outOrgName"/>
+		<result property="outOrgCode"  column="outOrgCode"/>
+		<result property="provId"  column="provId"/>
+		<result property="provName"  column="provName"/>
+		<result property="distrRelation"  column="distrRelation"/>
+		<result property="fillter"  column="fillter"/>
+		<result property="fillterName"  column="fillterName"/>
+		<result property="memo"  column="memo"/>
+		<result property="isStartInvoice"  column="isStartInvoice"/>
+		<result property="sumRow"  column="sumRow"/>
+		<result property="status"  column="status"/>
+		<result property="balanceOrgId"  column="balance_org_id"/>
+		<result property="version"  column="version"/>
+		<result property="balanceOrgName"  column="balance_org_name"/>
+		<result property="returnCompanyCode"  column="return_company_code"/>
+		<result property="returnCompanyErpCode"  column="return_company_erp_code"/>
+		<result property="returnOrgErpCode"  column="return_org_erp_code"/>	
+		<result property="returnOrgScmCode"  column="return_org_scm_code"/>
+		<result property="outOrgScmCode"  column="out_org_scm_code"/>	
+		<result property="outOrgErpCode"  column="out_org_erp_code"/>	
+		<result property="provCode"  column="prov_code"/>
+		<result property="provErpCode"  column="prov_erp_code"/>			
+	</resultMap> 	
+</mapper>

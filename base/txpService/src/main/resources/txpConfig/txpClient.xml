@@ -1,0 +1,366 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:c="http://camel.apache.org/schema/spring"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+      	 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd  
+           http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+           http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+
+	<context:property-placeholder location="classpath:txpConfig/*/*.properties" />
+	<context:annotation-config /> 
+	<import resource="client/txp-dbconfig.xml"/>
+	<import resource="client/txp-jms.xml"/>
+	<import resource="client/txp-taskconfig.xml"/>	
+	<import resource="client/txp-runtime-beans.xml"/>
+	<import resource="client/txp-dbsource.xml"/>
+	
+	<import resource="txp-errorhanders.xml"/>
+	<import resource="txp-beans.xml"/>
+	
+	<context:component-scan base-package="common.utils.sms" />
+	
+    
+    <c:camelContext >
+    	<!-- begin ******** 手动配置 启动某个任务 ***********  -->
+    	<c:route id="checkNeedSyncTasks" errorHandlerRef="defaultDeadLetterErrorHandler">
+    		<c:from uri="timer://foo?fixedRate=true&amp;period=50000000&amp;repeatCount=1" />
+    		<c:transform>
+	    		<c:groovy>
+	    		headers.txpMethod = 'noop';//'noop'; //'syncData'; //'dataUpload';//"fileDownload";
+	    		headers.txpTaskNames = '行政区划信息同步'; //'公司证照图片信息同步x';
+	    		body="my message ..sdfsdf."
+	    		</c:groovy>
+	    	</c:transform>
+    		<c:to uri="seda:startLoadTxpData"/>
+<!--     		<c:to  uri="activemq:queue:testhosp?requestTimeout=100000&amp;timeToLive=100000" /> -->
+    	</c:route>
+    	<!-- end ******** 手动配置 启动某个任务 ***********  -->   		
+	    
+	    <!-- begin 收集用户通告信息，并写入数据库 -->
+    	<c:route id="userMessageToDb" errorHandlerRef="defaultDeadLetterErrorHandler">
+    		<c:from uri="activemq:queue:user.messages.notify?requestTimeout=100000&amp;acknowledgementModeName=CLIENT_ACKNOWLEDGE" />
+    		<c:log message="userMessageReceive writeMessage ${body}  " />
+    		<c:transform>
+	    		<c:groovy>
+		    	UserMessageUtils.current.writeMessage(body);
+	    		</c:groovy>
+	    	</c:transform>
+    		<c:log message="userMessageReceive writeMessage ${body}  end" />
+    	</c:route>
+    	<!-- end  收集用户通告信息，并写入数据库 -->
+    	
+	    
+	    <!-- Begin ************************** 收集变化提醒消息，启动上传数据的任务  ************************************** -->
+	    <c:route  id="s-collectTabChangedMsgThenPutNtfs" errorHandlerRef="defaultDeadLetterErrorHandler">
+    		<c:from uri="activemq:queue:sql.table.changed?requestTimeout=100000&amp;acknowledgementModeName=CLIENT_ACKNOWLEDGE" />
+    		<c:bean beanType="gyqx.txp.biz.ClientNotifyProcessor"></c:bean>
+    		<c:choice>
+    			<c:when>
+					<c:groovy >body== null</c:groovy>
+					<c:log message="NotifyProcessor body== null" />
+	    		</c:when>
+	    		<c:otherwise>
+		    		<c:split >
+		    			<c:simple>body</c:simple>
+		    			<c:transform>
+			    			<c:groovy>
+			    				def task = body;
+			    				SubsiteRuntime.current().taskWorkStatusUtils.workRefresh(task);
+			    				body = task;
+			    			</c:groovy>
+			    		</c:transform>
+		    			<c:log message="read queue:sql.table.changed.c and put task ${body.taskName} . end." />
+		    		</c:split>
+	    		</c:otherwise>
+    		</c:choice>
+    	</c:route>
+    	<!-- *********************  从任务状态中查询需要上传或同步的任务   ******************************* -->
+    	<c:route id="queryNeedUploadAndSync" errorHandlerRef="defaultDeadLetterErrorHandler">
+    		<c:from uri="timer://subsite-tableChangedRoll?fixedRate=true&amp;period=10000" />
+    		<c:transform>
+   				<c:groovy>
+    				body=SubsiteRuntime.current().taskWorkStatusUtils.queryNeedUploadAndSync();
+    			</c:groovy>
+   			</c:transform>
+   			<c:split >
+	    		<c:simple>body</c:simple>
+	   			<c:choice>
+		    		<c:when>
+						<c:groovy>body.catalog != null  </c:groovy>
+						<c:transform>
+		    				<c:groovy>
+		    				<![CDATA[
+		    				headers.txpMethod = body.catalog;
+		    				headers.txpTaskNames = body.taskName;
+		    				headers.txpCatalog = body.catalog;
+		    				headers.txpStatus = body;
+							]]>
+			    			</c:groovy>
+		    			</c:transform>
+						<c:log message="queryNeedUploadAndSync start task=${body.taskName} catalog = ${body.catalog} end! " />
+						<c:to uri="seda:startLoadTxpData"/>
+		    		</c:when>
+		    		<c:otherwise>
+			    		<c:log message="queryNeedUploadAndSync body.catalog == ${body.catalog} null end!" />
+		    		</c:otherwise>
+	    		</c:choice>	
+	    	</c:split>	
+    	</c:route>
+    	<!-- end ************************** 收集变化提醒消息，启动上传数据的任务  **************************************  -->
+		   	
+    	<!-- begin *****************  从消息队列 中取 调用任务的字符串  ************************ -->
+    	<c:route id="loadTaskNamesToStart" errorHandlerRef="defaultDeadLetterErrorHandler">
+    		
+    		<c:from uri="activemq:queue:startLoadTxpData?requestTimeout=100000" />
+    		<c:transform>
+	    		<c:groovy>
+	    		def s = body;  //'sync>tab1,tab2'
+	    		if(s == ~ /(\w+)>((\w+),)*(\w+)/ )
+	    		{ 
+		    		def method = s.substring(0,s.indexOf('>'))
+					def taskNames = s.substring(s.indexOf('>')+1,s.length())
+		    		headers.txpMethod = method; 
+		    		headers.txpTaskNames = taskNames;
+	    		}else{
+	    			headers.txpMethod = 'noop'; 
+	    		}
+	    		</c:groovy>
+    		</c:transform>
+    		<c:to uri="seda:startLoadTxpData"/>
+    	</c:route>
+    	<!-- end *****************  从消息队列 中取 调用任务的字符串  ************************ -->
+    	
+    	<!-- begin ******************  启动任务     ********************* -->
+		<c:route id="loadTxpDataTo" errorHandlerRef="defaultDeadLetterErrorHandler" >
+			<c:from uri="seda:startLoadTxpData" /> 
+    		<c:transform>
+	    		<c:groovy>
+	    		def result = ClientSyncWorker.getCurrent().loadTxpDataRequest(headers);
+	    		headers.txpErrorCode = result.code;
+	    		if(result.code &lt; 0){	
+	    			headers.txpErrorMessage = result.errorMessage;
+	    			headers.txpNextEndpoint='direct:txpError';
+	    		}
+	    		body = result.txpMessages;
+	    		</c:groovy>
+    		</c:transform>
+    		<c:choice>
+    			<c:when>
+					<c:groovy >headers.txpErrorCode == -1</c:groovy>
+					<c:log message="headers.txpErrorCode == -1 " />
+					<c:toD uri="${header.txpNextEndpoint}" ></c:toD>
+	    		</c:when>
+	    		<c:otherwise>
+			    	<c:split>
+		    			<c:simple>${body}</c:simple>
+		    			<c:transform>
+	    					<c:groovy>
+	    					def txpMessage = body;
+	    					headers.txpDirectCmd = txpMessage.directCmd;
+	    					body;
+	    					</c:groovy>
+    					</c:transform>
+    					<c:to uri="direct://writeRequestTaskData" ></c:to> 
+			    		<c:log message="loadTxpDataTo  end" />
+		    		</c:split>
+	    		</c:otherwise>
+	    	</c:choice>
+    	</c:route>
+    	<!-- end ******************  启动任务     ********************* -->
+    	
+    	<!-- ********************* 把任务请求数据写入文件或直接上传  ************************* -->
+    	<c:route id="writeRequestTaskDataTo" >
+    		<c:from uri="direct://writeRequestTaskData" /> 
+    		<c:transform>
+   				<c:groovy>
+   					def txpMessage = body;
+   					headers.CamelFileName = "data.json";
+   					headers.txpTaskName = txpMessage.taskName;
+   					headers.txpCatalog = txpMessage.catalog;
+   					print headers.txpDirectCmd;
+   					body = Json.writeObjectToBytes(txpMessage);
+   				</c:groovy>
+   			</c:transform>
+			<c:marshal >
+				<c:zipFile />
+			</c:marshal>
+			<c:transform>
+	    		<c:groovy>
+	    		def now = new Date();
+	    		headers.siteId = TxpClientConfig.cfg.siteId;
+	    		headers.CamelFileName ='txp_' + now.format("yyyy-MM-dd_HH_mm_ss-SSS")+"_" + headers.txpTaskName + "_" + headers.txpCatalog +".zip";
+	    		body
+	    		</c:groovy>
+    		</c:transform>
+    		<c:choice>
+    			<c:when>
+					<c:groovy >headers.txpDirectCmd == true</c:groovy>
+					<c:transform>
+			    		<c:groovy>
+			    		headers.CamelJmsDestinationName = TxpClientConfig.cfg.centerDestinationName;
+			    		body
+			    		</c:groovy>
+		    		</c:transform>
+		    		<c:to uri="activemq2center:queue:dummy?requestTimeout=100000" />
+				</c:when>
+				<c:otherwise>
+					<c:to uri="file://target/txpfiles/to-center/in" />
+				</c:otherwise>
+			</c:choice>
+    		
+    		<c:log message="writeRequestTaskDataTo ${header.CamelFileName}  end" />
+    	</c:route>
+    	
+    	<!-- ********************** 上传任务数据到中心**************************** -->
+    	<c:route id="uploadSyncFileToCenter" errorHandlerRef="networkDeadLetterErrorHandler">
+    		<c:from uri="file://target/txpfiles/to-center/in?sortBy=file:onlyname.noext;file:modified" />
+    		<c:transform>
+	    		<c:groovy>
+	    		headers.CamelJmsDestinationName = TxpClientConfig.cfg.centerDestinationName;
+	    		body
+	    		</c:groovy>
+    		</c:transform>
+    		<c:to uri="activemq2center:queue:dummy?requestTimeout=100000" />
+    		<c:log message="uploadSyncFileToCenter ${header.CamelFileNameOnly} to ${header.CamelJmsDestinationName}  end" />
+    	</c:route>
+    	
+    	<!-- ********************** 从中心下载任务数据**************************** -->
+    	<c:route id="downloadResponseFromCenter" errorHandlerRef="networkDeadLetterErrorHandler"> 
+    		<c:from uri="activemq2center:queue:site-shanghai-huashanbei?requestTimeout=100000&amp;acknowledgementModeName=CLIENT_ACKNOWLEDGE" />
+    		<c:bean beanType="gyqx.txp.runtime.processor.CheckpointProcessor"></c:bean>
+    		<c:choice>
+    			<c:when>
+					<c:groovy >headers.txpDirectCmd == true</c:groovy>
+					<c:log message="headers.txpDirectCmd == true" />
+					<c:to uri="direct:txpTaskDataProc" ></c:to>
+	    		</c:when>
+	    		<c:otherwise>
+			    	<c:transform>
+			    		<c:groovy>
+			    		headers.CamelFileName = headers.CamelFileNameOnly ; 
+			    		body
+			    		</c:groovy>
+		    		</c:transform>
+		    		<c:to uri="file://target/txpfiles/from-center/in" />
+		    		<c:log message="downloadResponseFromCenter ${header.CamelFileNameOnly} end " />
+	    		</c:otherwise>
+	    	</c:choice>
+    	</c:route>
+    	
+    	<!-- ********************** 从中心下载通知**************************** -->
+    	<c:route id="downloadNotifyFromCenter" errorHandlerRef="networkDeadLetterErrorHandler"> 
+    		<c:from uri="activemqTopic:topic:sites?clientId=shanghai-huashanbei&amp;requestTimeout=100000&amp;acknowledgementModeName=CLIENT_ACKNOWLEDGE&amp;durableSubscriptionName=shanghai-huashanbei" />
+     		<c:to uri="file://target/txpfiles/from-center/notify-in" />
+    		<c:log message="downloadNotifyFromCenter : ${header.CamelFileName} end " />
+    	</c:route>
+    	
+    	<!-- ********************** 读取已下载通知，并启动处理过程**************************** -->
+    	<c:route id="read_notify-in_to_txpTaskDataProc " errorHandlerRef="defaultDeadLetterErrorHandler" >
+    		<c:from uri="file://target/txpfiles/from-center/notify-in?sortBy=file:onlyname.noext;file:modified" />
+    		<c:to uri="direct:txpTaskDataProc"/>
+    		<c:log message="read_notify-in_to_txpTaskDataProc : ${header.CamelFileName} end " />
+    	</c:route>
+    	
+    	<!-- ********************** 读取已下载任务数据，并启动处理过程**************************** -->
+    	<c:route id="read_center_from_in_to_txpTaskDataProc" errorHandlerRef="defaultDeadLetterErrorHandler" >
+    		<c:from uri="file://target/txpfiles/from-center/in?sortBy=file:onlyname.noext;file:modified" />
+    		<c:log message="read_center_from_in_to_txpTaskDataProc : ${header.CamelFileName} end  " />
+    		<c:to uri="direct:txpTaskDataProc"/>
+    	</c:route>
+    	
+    	<!-- ********************数据交换处理****************** -->
+    	<c:route id="txpTaskDataProcRoute" errorHandlerRef="defaultDeadLetterErrorHandler" >
+    		<c:from uri="direct:txpTaskDataProc" /> 
+    		<c:unmarshal>
+    			<c:zipFile />
+    		</c:unmarshal>
+    		<c:transform>
+	    		<c:groovy>
+	    		<![CDATA[
+	    		body = Json.readObject(body);
+	    		def message = body as TxpMessage
+	    		headers.TxpMessage = message;
+	    		def result = ClientSyncWorker.getCurrent().doTxpTaskDataProc(message);
+	    		if(result == null )
+	    			headers.txpNextEndpoint='direct:null';
+	    		else if(result.code <0){
+	    			headers.txpCatalog = result.catalog;
+	    			headers.txpTaskName = result.taskName;
+	    			headers.txpErrorCode = result.code;
+	    			headers.txpErrorMessage = result.errorMessage;
+	    			headers.txpNextEndpoint='direct:txpError';
+	    		}
+	    		else{
+	    			headers.txpCatalog = result.catalog;
+	    			headers.txpMethod = result.eagerMethod;
+	    			headers.txpTaskNames = result.taskName;
+	    			headers.txpNextEndpoint = "direct:null";
+	    			if(result.hasMore)
+	    				headers.txpNextEndpoint = 'seda:startLoadTxpData';
+	    			if(result.eagerNextUri != null)
+	    				headers.txpNextEndpoint = result.eagerNextUri;
+	    		}
+	    		body = result;
+	    		]]>
+	    		</c:groovy>
+    		</c:transform>
+    		<c:log message="TaskDataProcRoute: ${header.TxpMessage.taskName} end" />
+    		<c:toD uri="${header.txpNextEndpoint}" ></c:toD>
+    	</c:route>
+    	
+    	<!-- 退出 -->
+    	<c:route id="txp_exit">
+    		<c:from uri="direct:null"></c:from>
+    		<c:log message="direct:null end." />
+    	</c:route>
+    	
+    	<!-- 错误信息收集 -->
+    	<c:route id="txp_error">
+    		<c:from uri="direct:txpError"></c:from>
+    		<c:log loggingLevel="ERROR" message="txpTaskName:${header.txpTaskName} \ntxpErrorCode:${header.txpErrorCode} \n txpError:${header.txpErrorMessage} " />
+    	</c:route>
+    	
+    	<c:route id="report_result_toCenter">
+    		<c:from uri="direct:reportToCenter"></c:from>    		
+    		<c:transform>
+   				<c:groovy>
+   					def txpMessage = body.txpMessage;
+   					body = Json.writeObjectToBytes(txpMessage);
+   					headers.txpFromId = txpMessage.fromId;
+   					headers.txpToId = "0";
+   					headers.CamelJmsDestinationName = TxpClientConfig.cfg.reportDestinationName;
+	    			body
+   				</c:groovy>
+   			</c:transform>
+   			<c:marshal >
+				<c:zipFile />
+			</c:marshal>
+   			<c:to uri="activemq2center:queue:dummy?requestTimeout=100000&amp;timeToLive=100000" />
+   			<c:log message="reportToCenter end." />
+    	</c:route>
+    	
+    	<c:route id="send-sms">
+    		<c:from uri="activemq:queue:sms?requestTimeout=100000&amp;acknowledgementModeName=CLIENT_ACKNOWLEDGE" />
+    		<c:log message="send sms:  begin: ${body}" />
+    		<c:transform>
+	    		<c:groovy>
+	    			import gyqx.txp.utils.json.Json
+	    			import gyqx.txp.runtime.CamelRuntimeState
+	    			
+	    			def param = Json.readMap(body);
+		    		def smsService = CamelRuntimeState.getBean('smsServiceImpl');
+		    		def result = smsService.sendSms(param.phoneNum, param.signName, param.templateCode,param.templateParam);
+		    		
+		    		Json.write(result)
+	    		</c:groovy>
+	    	</c:transform>
+    		<c:log message="send sms: end : ${body}" />
+    	</c:route>
+    	
+    </c:camelContext>
+</beans>

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:c="http://camel.apache.org/schema/spring"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+      	 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd  
+           http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+           http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+
+	<context:property-placeholder location="classpath*:testConfig/dbCopy/*.properties" />
+	
+	<import resource="txp-dbconfig.xml"/>
+	<import resource="txp-beans.xml"/>
+	<import resource="txp-errorhanders.xml"/>
+	<import resource="txp-beans.xml"/>
+    
+    <c:camelContext >
+    	
+    	<c:route id="querytest" >
+    		<c:from uri="timer://test1?fixedRate=true&amp;period=500&amp;repeatCount=1" />
+    		<c:transform>
+	    		<c:groovy>
+	    		def db = DbSources.getCurrent().getDbSource("from");
+		    	def utils = new DbUtils(db);
+		    	
+		    	def sql="select * from bas_barcode_rules where is_main=:iid"
+		    	def tables = utils.query(sql,[id:'0001'])
+		    	sql="insert into bas_barcode_rules (id,barcode,barcode_len,barleader) values('0001','b01',3,:ismain),('0002','b02',3,:lld)"
+		    	utils.update(sql,[lld:'lsll'])
+	    		</c:groovy>
+    		</c:transform>
+    		
+	    	<c:log message=" writeMessage ${body}  end" />
+	    </c:route>
+   		<!-- begin *** 从 库，copy 表到  ** -->
+
+<!--     	<c:route id="queryTables" errorHandlerRef="defaultDeadLetterErrorHandler"> -->
+<!--     		<c:from uri="timer://copy?fixedRate=true&amp;period=50000000&amp;repeatCount=1" /> -->
+<!--     		<c:transform> -->
+<!-- 	    		<c:groovy> -->
+<!-- 	    		def db = DbSources.getCurrent().getDbSource("fromMeta"); -->
+<!-- 		    	def utils = new DbUtils(db); -->
+<!-- 		    	def tabSchema ='spd'; -->
+<!-- 		    	def sql="select TABLE_NAME from TABLES where TABLE_TYPE='BASE TABLE' and TABLE_SCHEMA='$tabSchema' and table_name>='prov_hos_info' order by TABLE_NAME" -->
+<!-- 		    	def tables = utils.queryValues(sql,String);  -->
+<!-- 	    		</c:groovy> -->
+<!--     		</c:transform> -->
+<!--     		<c:split > -->
+<!-- 	    		<c:simple>body</c:simple> -->
+<!-- 	    		<c:to uri="seda:tableFromDbToDb"></c:to> -->
+<!-- 	    	</c:split> -->
+<!-- 	    	<c:log message=" writeMessage ${body}  end" /> -->
+<!-- 	    </c:route> -->
+	    
+	    <c:route id="tableFromDbToDb" errorHandlerRef="defaultDeadLetterErrorHandler">
+	    	<c:from uri="seda:tableFromDbToDb?queue=#arrayQueue&amp;concurrentConsumers=5" /> 
+	    	<c:log message="table name: ${body}"/> 
+    		<c:transform>
+	    		<c:groovy>
+	    		def tableName = body;
+	    		def db = DbSources.getCurrent().getDbSource("from");
+	    		def utils = new DbUtils(db);
+	    		
+	    		def db0 = DbSources.getCurrent().getDbSource("to");
+	    		def utils0 = new DbUtils(db0);	
+
+	    		
+	    		def metaInfo = DbSources.getCurrent().getDbMetaInfo(db0);
+				def tm = metaInfo.get(tableName);
+				def insertSql = TaskSqlBuilder.buildDefaultInsertSql(tm) ;
+	    		
+	    		def rows = utils.queryForStreamList('select * from ' + tableName);
+	    		
+	    		utils0.beginTransaction();
+	    		try{
+	    			utils0.update('delete from ' + tableName);
+	    			def i = 0
+		    		rows.each{row->
+		    			utils0.update(insertSql,row);	
+		    			println tableName +':row ' + (++i);
+		    		};
+		    		utils0.commit();
+	    		}catch(Exception ex){
+	    			utils0.rollback();
+	    			throw ex;
+	    		}
+	    		body = tableName;
+	    		</c:groovy>
+	    	</c:transform>
+	    	<c:log message="table name: ${body} end"/>
+	    </c:route>
+
+	    <!-- end *** 从 mysql库，copy 表到oracle ** -->
+	    
+	   
+    	
+    </c:camelContext>
+</beans>

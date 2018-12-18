@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:c="http://camel.apache.org/schema/spring"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+      	 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd  
+           http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+           http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+	<context:property-placeholder  location="classpath:txpConfig/*/*.properties"/>
+
+	<context:annotation-config /> 	
+ 
+    <!-- 对包中的所有类进行扫描，以完成Bean创建和自动依赖注入的功能 -->
+    <context:component-scan base-package="gyqx.txp.runtime.context" />
+    <context:component-scan base-package="common.utils.sms" />
+
+    <bean id="activemq" class="org.apache.activemq.camel.component.ActiveMQComponent">		
+		<property name="concurrentConsumers" value="1"></property>
+		<property name="maxConcurrentConsumers" value="1"></property>
+		<property name="connectionFactory">
+			<ref bean="pooledConnectionFactoryForCamel" />
+	    </property>
+	</bean>	
+	<bean id="localConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+		<property name="brokerURL" value="tcp://10.17.85.26:61616"/> 		
+		<property name="userName" value="wjywin@qq.com" />
+		<property name="password" value="zxc@123" /> 
+	</bean>
+	
+	<bean id="pooledConnectionFactoryForCamel" class="org.apache.activemq.pool.PooledConnectionFactory">  
+	    <property name="connectionFactory" ref="localConnectionFactory"/>  
+	    <property name="maxConnections" value="10"/>  
+	</bean> 
+	
+    <c:camelContext >
+    	<c:route id="send-sms">
+    		<c:from uri="activemq:queue:sms-test?requestTimeout=100000&amp;acknowledgementModeName=CLIENT_ACKNOWLEDGE" />
+    		<c:log message="send sms:  begin: ${body}" />
+    		<c:transform>
+	    		<c:groovy>
+	    			import gyqx.txp.utils.json.Json
+	    			import gyqx.txp.runtime.CamelRuntimeState
+	    			
+	    			def param = Json.readMap(body);
+		    		def smsService = CamelRuntimeState.getBean('smsServiceImpl');
+		    		def result = smsService.sendSms(param.phoneNum, param.signName, param.templateCode,param.templateParam);
+		    		
+		    		Json.write(result)
+	    		</c:groovy>
+	    	</c:transform>
+<!--     		<c:from uri="timer://foo?fixedRate=true&amp;period=50000000&amp;repeatCount=1" /> -->
+    		<c:log message="send sms: end : ${body}" />
+    	</c:route>
+    </c:camelContext>
+</beans>

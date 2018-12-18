@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="gyqx.spdhdi.uploadData.dao.mapper.ProvOrgInnerCodeMapper">
+	
+	<!-- vo类映射 -->
+	<resultMap type="gyqx.spdhdi.uploadData.vo.ProvOrgInnerCodeVo" id="provOrgInnerCodeVoMap">
+		<id property="id" column="id" />
+		<result property="provId" column="prov_id" />
+		<result property="sysFlag" column="sys_flag" />
+		<result property="provErpCode" column="prov_erp_code" />
+		<result property="putKey" column="put_key" />
+		<result property="putPass" column="put_pass" />
+		<result property="uploadKey" column="upload_key" />
+		<result property="uploadPass" column="upload_pass" />
+		<result property="uploadUrl" column="upload_url" />
+		<result property="version" column="version"/>
+	</resultMap>
+	
+	<!-- 查询所有库存信息 -->
+	<select id="getProOrgInnerCode" parameterType="gyqx.spdhdi.uploadData.vo.ProvOrgInnerCodeVo" resultMap="provOrgInnerCodeVoMap">
+		SELECT
+			*
+		FROM
+			prov_org_inner_code
+		<where>
+			<if test = "provErpCode != null and provErpCode neq '' ">
+				prov_erp_code = #{provErpCode}
+			</if>
+			<if test="provId != null and provId neq '' ">
+				AND prov_id = #{provId}
+			</if>
+			<if test = "sysFlag != null and sysFlag neq '' ">
+				AND sys_flag = #{sysFlag}
+			</if>
+		</where>
+	</select>
+	
+</mapper>

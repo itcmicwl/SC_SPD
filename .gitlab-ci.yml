@@ -1,0 +1,10 @@
+image: 10.17.65.22:8088/maven:3-jdk-8-alpine
+
+test:
+  stage: test
+  script:
+    - test $(find shanghai -name "*.properties" -path "*/properties/*" | wc -l) -eq 0
+    - test $(find shanghai -name "index.js" -path "*/config/*" | wc -l) -eq 0
+    - test $(find shanghai/web -name "*.vue" -type f -exec grep -E 'debugger|console\.log' {} \; | wc -l) -eq 0
+  tags:
+    - common

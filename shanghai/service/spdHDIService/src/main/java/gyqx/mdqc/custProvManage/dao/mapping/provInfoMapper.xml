@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 引入接口，只要实现接口的方法就会调用对应接口方法的 select id -->
+<mapper namespace="gyqx.mdqc.custProvManage.dao.mapper.IProvInfoMapper">
+	<!-- parameterType传入参数类型 resultMap=自己定义的一个返回类型 resultType返回类型 -->
+	<select id="getProvInfoList" resultMap="companyInfoVo"
+		parameterType="gyqx.mdqc.custProvManage.vo.BasCompanyInfoVo">
+		select * from bas_company_info b
+		<where>
+			<if test='cname != null and cname !=""'>
+			 <bind name="cname" value="'%' + cname + '%'" />
+				and b.cname LIKE  #{cname}  
+			</if>
+			<if test='kind != null and kind !="" and kind == "2"'><!-- 供应商 = 供应商 + 厂供商一体 -->
+				and (b.kind =  2 or b.kind =4  )
+			</if>
+			<if test='kind != null and kind !="" and kind == "3"'><!-- 厂商 = 厂商 + 厂供商一体 -->
+				and (b.kind =  3 or b.kind =4  )
+			</if>
+			<if test='kind != null and kind !="" and kind == "1"'><!-- 医院 -->
+				and b.kind = 1  
+			</if>
+			<if test='kind != null and kind !="" and kind == "x"'><!-- kind为x，查询所有启用状态下的厂商和供应商，注意flag=1 -->
+				and b.kind != 1  
+			</if>
+			<if test='flag != null and flag !=""'>
+				and b.flag = #{flag}  
+			</if>
+			<if test='kind == "2" and remark != null and remark !=""'>
+				and not exists (select id from collector_prov_cert c where c.collector_id = #{remark} and c.prov_id = b.id)   
+			</if>
+			<if test='kind == "3" and remark != null and remark !=""'>
+				and not exists (select id from prov_mfrs_info m where m.prov_id = #{remark} and m.mfrs_id = b.id)
+			</if>
+		 	order by id
+		</where>
+	</select>
+	
+	<resultMap type="gyqx.mdqc.custProvManage.vo.BasCompanyInfoVo" id="companyInfoVo">
+		<id property="id" column="id"/>
+		<id property="code" column="code"/>
+		<result column="mfrs_kind" property="mfrsKind" jdbcType="VARCHAR" />
+		<result column="agent_name" property="agentName" jdbcType="VARCHAR" />
+		<result column="product_code" property="productCode" jdbcType="VARCHAR" />
+		<result column="record_card" property="recordCard" jdbcType="VARCHAR" />
+		
+		<result property="cname"  column="cname"/>
+		<result property="anotherName"  column="another_name"/>
+		<result property="shortPinyin"  column="short_pinyin"/>
+		<result property="regCode"  column="Reg_code"/>
+		<result property="jyxkCode"  column="jyxk_code"/>
+		<result property="nsrsbCode"  column="nsrsb_code"/>
+		<result property="kind"  column="kind"/>
+	    <result property="legal"  column="legal"/>
+		<result property="address"  column="address"/>
+		<result property="linkman"  column="linkman"/>
+		<result property="contactWay"  column="contact_way"/>
+		<result property="contactFax"  column="contact_fax"/>
+		<result property="logo" column="logo"/>
+		<result property="masterCode" column="master_code"/>   
+		<result property="postCode" column="post_code"/>  
+		<result property="email" column="email"/>
+		<result property="remark" column="remark"/>
+		<result property="erpCode" column="erp_code"/>
+		<result property="isSupply" column="is_supply"/>
+		<result property="isThreeInOne" column="is_three_in_one"/>   
+		<result property="flag" column="flag"/>
+		<result property="uid" column="uxid"/>
+		<result property="fillDate" column="fill_date"/>   
+		<result property="lastUpdateDatetime" column="last_update_datetime"/>
+		<result property="version" column="version"/>
+	</resultMap>
+	
+</mapper>

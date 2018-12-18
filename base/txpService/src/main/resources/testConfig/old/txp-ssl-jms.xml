@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:camel="http://camel.apache.org/schema/spring"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+      	 http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd  
+           http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+           http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+	<bean id="activemq" class="org.apache.activemq.camel.component.ActiveMQComponent">		
+<!-- 		<property name="brokerURL" value="tcp://192.168.1.251:61616"/> -->
+		<property name="concurrentConsumers" value="1"></property>
+		<property name="maxConcurrentConsumers" value="1"></property>
+		<property name="connectionFactory">
+			<ref bean="pooledConnectionFactoryForCamel" />
+	    </property>
+	</bean>
+	
+	<bean id="connectionFactoryForCamel" class="org.apache.activemq.ActiveMQSslConnectionFactory">
+		<property name="brokerURL" value="ssl://192.168.1.251:61617"/>		
+		<property name="keyStore" value="client1.ks " />
+        <property name="trustStore" value="client1.ts" />
+        <property name="keyStorePassword" value="zxczxc" />
+        <property name="trustStorePassword" value="zxczxc" />
+        <property name="userName" value="wjywin@qq.com" />
+		<property name="password" value="zxc@123" /> 	
+	</bean>
+	
+	<bean id="pooledConnectionFactoryForCamel" class="org.apache.activemq.pool.PooledConnectionFactory" destroy-method="stop">  
+	    <property name="connectionFactory" ref="connectionFactoryForCamel"/>  
+	    <property name="maxConnections" value="32"/>  
+	</bean> 
+	
+	<bean id="localConnectionFactory" class="org.apache.activemq.ActiveMQSslConnectionFactory">
+		<property name="brokerURL" value="ssl://192.168.1.251:61617"/>		
+		<property name="keyStore" value="client1.ks " />
+        <property name="trustStore" value="client1.ts" />
+        <property name="keyStorePassword" value="zxczxc" />
+        <property name="trustStorePassword" value="zxczxc" />
+	</bean>
+	
+	<bean id="localPooledConnectionFactory" class="org.apache.activemq.pool.PooledConnectionFactory">  
+	    <property name="connectionFactory" ref="localConnectionFactory"/>  
+	    <property name="maxConnections" value="32"/>  
+	</bean> 
+	
+	<bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+        <property name="connectionFactory" ref="localPooledConnectionFactory" />
+    </bean>
+    
+    <bean class="gyqx.txp.utils.mq.JMSSender">
+    	<constructor-arg >
+    		<ref bean="jmsTemplate"/>
+    	</constructor-arg>    
+    </bean>
+	
+</beans>

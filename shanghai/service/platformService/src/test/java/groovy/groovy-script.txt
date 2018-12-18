@@ -1,0 +1,16 @@
+
+Tx.transform(a).to(b);
+
+b.bv = 789;
+b.v = 111;
+b.curDate = new Date();
+
+def c = [:];
+
+Tx.transform(b).to(c);
+        
+Map map = Tx.transform(b).toMap();
+
+map["ccc"] = c;
+
+return map;

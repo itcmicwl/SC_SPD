@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 引入接口，只要实现接口的方法就会调用对应接口方法的 select id -->
+<mapper namespace="gyqx.spdhdi.mycerts.dao.mapper.IJxsqsMapper">
+	<!-- parameterType传入参数类型 resultMap=自己定义的一个返回类型 resultType返回类型 -->
+	<select id="getJxsqsList" resultMap="jxsqsVo"
+		parameterType="gyqx.spdhdi.mycerts.vo.JxsqsVo">
+		SELECT b2.cname as chief_name, b.cname as prov_name, j.*
+		  from prov_jxsqs j
+		  left join bas_company_info b
+		    on j.prov_id = b.id
+		  left join bas_company_info b2
+		    on j.chief_id = b2.id
+		<where>
+			j.corp_id = #{corpId}
+			<if test='provName != null and provName !=""'>
+			<!--  <bind name="provName" value="'%' + provName + '%'" /> -->
+				<!-- and b.cname LIKE  #{provName}   -->
+				and j.prov_id=#{provName}  
+			</if>
+			<if test='chiefName != null and chiefName !=""'>
+			 <bind name="chiefName" value="'%' + chiefName + '%'" />
+				and b2.cname LIKE  #{chiefName}  
+			</if>
+			<if test='provId != null and provId !=""'>
+				and j.id in(
+				    select a.id from(
+						select distinct b.is_mfrs,substr(SYS_CONNECT_BY_PATH(a.sqs_id,'->'),3,16) as id 
+							from PROV_JXSQS_GOODS a,PROV_JXSQS b
+							where a.sqs_id=b.id and sqs_lastlevel_id is null and b.is_mfrs='0'
+						start with a.prov_id=#{provId}
+						CONNECT BY nocycle PRIOR a.sqs_lastlevel_id=a.sqs_id 
+					) a union all
+					select id from PROV_JXSQS j where not exists (
+					    select * from prov_jxsqs_goods g where g.prov_id=#{provId} and g.sqs_id = j.id
+					)
+				)
+			</if>
+		</where>
+		order by j.id desc
+	</select>
+	<resultMap id="jxsqsVo" type="gyqx.spdhdi.mycerts.vo.JxsqsVo">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="prov_id" property="provId"/>
+        <result column="prov_name" property="provName"/>
+        <result column="mfrs_id" property="mfrsId"/>
+        <result column="is_mfrs" property="isMfrs"/>
+        <result column="chief_id" property="chiefId"/>
+        <result column="chief_name" property="chiefName"/>
+        <result column="sale_area" property="saleArea"/>
+        <result column="expdt_begin_date" property="expdtBeginDate"/>
+        <result column="expdt_end_date" property="expdtEndDate"/>
+        <result column="is_validing" property="isValiding"/>
+        <result column="file_path" property="filePath"/>
+        <result column="version" property="version"/>
+        
+        <collection property="jxsqsHosInfos" column="id" ofType="BasCompanyInfoJxsqsVoBaseResultMap"
+                    select="getForHospitals"/>
+    </resultMap>
+    
+    <select id="getJxsqsById" resultMap="jxsqsVo">
+		SELECT b2.cname as chief_name, b.cname as prov_name, j.*
+		  from prov_jxsqs j
+		  left join bas_company_info b
+		    on j.prov_id = b.id
+		  left join bas_company_info b2
+		    on j.chief_id = b2.id
+		<where>
+			j.id = #{id}
+		</where>
+	</select>
+    
+    <select id="getForHospitals" parameterType="java.lang.String" resultMap="BasCompanyInfoJxsqsVoBaseResultMap">
+        SELECT
+         p.*,b.cname
+        FROM
+            prov_jxsqs_hos p
+        JOIN bas_company_info b ON p.hos_id = b.id
+        WHERE
+        	p.sqs_id = #{id} AND b.kind = 1 AND b.flag = 1
+    </select>
+    
+    <resultMap id="BasCompanyInfoJxsqsVoBaseResultMap" type="gyqx.spdhdi.mycerts.vo.JxsqsToHosVo">
+        <id column="id" property="id" jdbcType="VARCHAR"/>
+        <result column="sqs_id" property="sqsId"/>
+        <result column="prov_id" property="provId"/>
+        <result column="hos_id" property="hosId"/>
+        <result column="cname" property="cname"/>
+        <result column="uxid" property="uxid"/>
+        <result column="fill_date" property="fillDate"/>
+        <result column="last_update_datetime" property="lastUpdateDatetime"/>
+        <result column="version" property="version"/>
+    </resultMap>
+    
+    <select id="getJxsqsGoodsInfo" resultMap="bGoodsVoMap"
+		parameterType="gyqx.spdhdi.mycerts.vo.JxsqsGoodsVo">
+		select pjg.id as pjg_id,m.mfrs_name as mfrsName,bg.* from PROV_JXSQS_GOODS pjg
+		LEFT JOIN bas_goods_info  bg on pjg.goods_id = bg.id
+		left JOIN bas_mfrs_info m  on bg.mfrs_id = m.id
+		<where>
+			pjg.sqs_id = #{sqsId}
+			<if test='goodsName != null and goodsName !=""'>
+			 <bind name="goodsName" value="'%' + goodsName + '%'" />
+				and (
+					bg.goods_name LIKE  #{goodsName} 
+					or bg.short_pinyin LIKE  #{goodsName}
+					or bg.goods_gg LIKE  #{goodsName}
+				)
+			</if>
+			<if test='mfrsName != null and mfrsName !=""'>
+			 <bind name="mfrsName" value="'%' + mfrsName + '%'" />
+				and m.mfrs_name like  #{mfrsName}  
+			</if>
+		</where>
+		order by pjg.id
+	</select>
+	
+	<resultMap type="gyqx.spdhdi.mycerts.vo.JxsqsGoodsVo" id="bGoodsVoMap">
+		<id property="id" column="id"/>
+		<id property="code" column="code"/>
+		<result property="pjgId"  column="pjg_id"/><!-- 授权书关联商品ID -->
+		<result property="goodsName"  column="goods_name"/>
+		<result property="shortPinyin"  column="short_pinyin"/>
+		<result property="goodsGg"  column="goods_gg"/>
+		<result property="brand"  column="brand"/>
+		<result property="made"  column="made"/>
+		<result property="mfrsId"  column="mfrs_id"/>
+		<result property="unit"  column="unit"/>
+		<result property="packeage"  column="packeage"/>
+		<result property="masterCode"  column="master_code"/>
+	    <result property="mfrsCode"  column="mfrs_code"/>
+		<result property="kindCode"  column="kind_code"/>
+		<result property="kind68code"  column="kind_68code"/>
+		<result property="fieldCode1"  column="field_code1"/>
+		<result property="fieldCode2"  column="field_code2"/>
+		<result property="fieldCode3" column="field_code3"/>   
+		<result property="fieldCode4" column="field_code4"/>
+		<result property="certificateCode" column="certificate_code"/>
+		<result property="lbsx" column="lbsx"/>
+		<result property="flag" column="flag"/>   
+		<result property="remark" column="remark"/>
+		<result property="uid" column="uxid"/>
+		<result property="fillDate" column="fill_date"/>   
+		<result property="lastUpdateDatetime" column="last_update_datetime"/>
+		<result property="version" column="version"/>
+		<result property="mfrsName" column="mfrsName"/>
+	</resultMap>
+    
+	
+</mapper>

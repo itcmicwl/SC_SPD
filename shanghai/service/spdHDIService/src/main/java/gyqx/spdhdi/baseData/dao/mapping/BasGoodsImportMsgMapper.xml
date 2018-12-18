@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="gyqx.spdhdi.baseData.dao.mapper.BasGoodsImportMsgMapper">
+
+    <insert id="insertProvMfrsInfo">
+        INSERT
+        INTO
+            PROV_MFRS_INFO (ID,
+                            PROV_ID,
+                            MFRS_ID,
+                            FLAG,
+                            UXID,
+                            FILL_DATE,
+                            LAST_UPDATE_DATETIME,
+                            VERSION)
+        VALUES(#{id},
+               #{provId},
+               #{mfrsId},
+               #{flag},
+               #{uxid},
+               SYSDATE,
+               SYSDATE,
+               0)
+    </insert>
+    <insert id="insertProvMfrsCert">
+        INSERT
+        INTO
+            PROV_MFRS_CERTIFICATE (ID,
+                                   P_ID,
+                                   MFRS_ID,
+                                   CERT_KIND,
+                                   CERT_CODE,
+                                   EXPDT_BEGIN_DATE,
+                                   EXPDT_END_DATE,
+                                   IS_VALIDING,
+                                   UXID,
+                                   FILL_DATE,
+                                   LAST_UPDATE_DATETIME,
+                                   VERSION)
+        VALUES(#{id},
+               #{pid},
+               #{mfrsId},
+               #{certKind},
+               #{certCode},
+               #{expdtBeginDate},
+               #{expdtEndDate},
+               #{isValiding},
+               #{uxid},
+               SYSDATE,
+               SYSDATE,
+               0)
+    </insert>
+    <insert id="insertProvMfrsCertImg">
+        INSERT
+        INTO
+            PROV_MFRS_CERTIFICATE_IMAGE (ID,
+                                         CERTIFICATE_ID,
+                                         FILE_PATH,
+                                         FILL_DATE,
+                                         UXID,
+                                         LAST_UPDATE_DATETIME,
+                                         VERSION)
+        VALUES(#{id},
+               #{certificateId},
+               #{filePath},
+               SYSDATE,
+               #{uxid},
+               SYSDATE,
+               0)
+    </insert>
+    <insert id="insertProvProvInfo">
+        INSERT
+        INTO
+            COLLECTOR_PROV_CERT (ID,
+                                 COLLECTOR_ID,
+                                 PROV_ID,
+                                 FLAG,
+                                 REMARK,
+                                 FILL_DATE,
+                                 LAST_UPDATE_DATETIME,
+                                 UXID,
+                                 VERSION)
+        VALUES(#{id},
+               #{collectorId},
+               #{provId},
+               #{flag},
+               #{remark},
+               SYSDATE,
+               SYSDATE,
+               #{uxid},
+               0)
+    </insert>
+    <insert id="insertProvProvCert">
+        INSERT
+        INTO
+            COLLECTOR_PROV_CERTIFICATE (ID,
+                                        P_ID,
+                                        PROV_ID,
+                                        CERT_KIND,
+                                        CERT_CODE,
+                                        EXPDT_BEGIN_DATE,
+                                        EXPDT_END_DATE,
+                                        IS_VALIDING,
+                                        UXID,
+                                        FILL_DATE,
+                                        LAST_UPDATE_DATETIME,
+                                        VERSION)
+        VALUES(#{id},
+               #{pid},
+               #{provId},
+               #{certKind},
+               #{certCode},
+               #{expdtBeginDate},
+               #{expdtEndDate},
+               #{isValiding},
+               #{uxid},
+               SYSDATE,
+               SYSDATE,
+               0)
+    </insert>
+    <insert id="insertProvProvCertImg">
+        INSERT
+        INTO
+            PROV_CERTIFICATE_IMAGE (ID,
+                                    CERTIFICATE_ID,
+                                    FILE_PATH,
+                                    FILL_DATE,
+                                    UXID,
+                                    LAST_UPDATE_DATETIME,
+                                    VERSION)
+        VALUES(#{id},
+               #{certificateId},
+               #{filePath},
+               SYSDATE,
+               #{uxid},
+               SYSDATE,
+               0)
+    </insert>
+</mapper>

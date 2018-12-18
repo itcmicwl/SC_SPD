@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="gyqx.spdhdi.orderMgr.dao.mapper.IReturnconfirmMapper"> 
+<!-- parameterType传入参数类型     resultMap=自己定义的一个返回类型     resultType返回类型 -->
+	<select id="list"  resultMap="returnconfirmMap" parameterType="gyqx.spdhdi.po.Returnconfirm">
+		<![CDATA[
+		select id,bill_id,return_bill_id,fill_date,spd_code,return_company_id,return_company_code,return_company_name,return_company_erp_code,return_org_id,return_org_code,return_org_name,return_org_scm_code,return_org_erp_code,out_org_id,out_org_code,out_org_name,out_org_scm_code,out_org_erp_code,prov_id,prov_code,prov_name,prov_erp_code,prov_org_code,prov_system_id,delivery_relation,balance_org_id,fillter,remark,sum_row,status,version from returnconfirm
+		]]>
+		<where>
+			and id = #{id}
+		</where>
+	</select>
+	
+	<select id="listVo"  resultMap="returnconfirmVoMap" parameterType="gyqx.spdhdi.orderMgr.vo.ReturnconfirmVo">
+		<![CDATA[
+		select r.*,uo.ename as fillterName from returnconfirm r LEFT JOIN sys_user_org uo on uo.user_id = r.fillter
+				]]>
+		<where>
+		    <if test="id!=null and id !=''">  and r.id = #{id}</if>
+		    <if test="provId!=null and provId !=''">  and r.prov_id = #{provId}</if>
+		    
+		</where>
+	</select>
+	<resultMap type="gyqx.spdhdi.orderMgr.vo.ReturnconfirmVo" id="returnconfirmVoMap" extends="returnconfirmMap">
+	  		<result property="fillterName"  column="fillterName"/>
+
+	</resultMap>
+	
+ 	<resultMap type="gyqx.spdhdi.po.Returnconfirm" id="returnconfirmMap">
+		<id property="id" column="id"/>
+		<result property="billId"  column="bill_id"/>
+		<result property="returnBillId"  column="return_bill_id"/>
+		
+		<result property="fillDate"  column="fill_date"/>
+		<result property="spdCode"  column="spd_code"/>
+		<result property="returnCompanyId"  column="return_company_id"/>
+		<result property="returnCompanyCode"  column="return_company_code"/>
+		<result property="returnCompanyName"  column="return_company_name"/>
+		<result property="returnCompanyErpCode"  column="return_company_erp_code"/>
+		<result property="returnOrgId"  column="return_org_id"/>
+		<result property="returnOrgCode"  column="return_org_code"/>
+		<result property="returnOrgName"  column="return_org_name"/>
+		<result property="returnOrgScmCode"  column="return_org_scm_code"/>
+		<result property="returnOrgErpCode"  column="return_org_erp_code"/>
+		<result property="outOrgId"  column="out_org_id"/>
+		<result property="outOrgCode"  column="out_org_code"/>
+		<result property="outOrgName"  column="out_org_name"/>
+		<result property="outOrgScmCode"  column="out_org_scm_code"/>
+		<result property="outOrgErpCode"  column="out_org_erp_code"/>
+		<result property="provId"  column="prov_id"/>
+		<result property="provCode"  column="prov_code"/>
+		<result property="provName"  column="prov_name"/>
+		<result property="provErpCode"  column="prov_erp_code"/>
+		<result property="provOrgCode"  column="prov_org_code"/>
+		<result property="provSystemId"  column="prov_system_id"/>
+		<result property="deliveryRelation"  column="delivery_relation"/>
+		<result property="balanceOrgId"  column="balance_org_id"/>
+		<result property="fillter"  column="fillter"/>
+		<result property="remark"  column="remark"/>
+		<result property="sumRow"  column="sum_row"/>
+		<result property="status"  column="status"/>
+
+		
+		<result property="version"  column="version"/>
+	</resultMap> 
+	
+	<update id="update" parameterType="gyqx.spdhdi.po.Returnconfirm" >
+		update returnconfirm
+		<set>
+			<if test='billId != null'>  
+				bill_id = #{billId},
+			</if> 
+			<if test='returnBillId != null'>  
+				return_bill_id = #{returnBillId},
+			</if> 
+			<if test='fillDate != null'>  
+				fill_date = #{fillDate},
+			</if> 
+			<if test='spdCode != null'>  
+				spd_code = #{spdCode},
+			</if> 
+			<if test='returnCompanyId != null'>  
+				return_company_id = #{returnCompanyId},
+			</if> 
+			<if test='returnCompanyCode != null'>  
+				return_company_code = #{returnCompanyCode},
+			</if> 
+			<if test='returnCompanyName != null'>  
+				return_company_name = #{returnCompanyName},
+			</if> 
+			<if test='returnCompanyErpCode != null'>  
+				return_company_erp_code = #{returnCompanyErpCode},
+			</if> 
+			<if test='returnOrgId != null'>  
+				return_org_id = #{returnOrgId},
+			</if> 
+			<if test='returnOrgCode != null'>  
+				return_org_code = #{returnOrgCode},
+			</if> 
+			<if test='returnOrgName != null'>  
+				return_org_name = #{returnOrgName},
+			</if> 
+			<if test='returnOrgScmCode != null'>  
+				return_org_scm_code = #{returnOrgScmCode},
+			</if> 
+			<if test='returnOrgErpCode != null'>  
+				return_org_erp_code = #{returnOrgErpCode},
+			</if> 
+			<if test='outOrgId != null'>  
+				out_org_id = #{outOrgId},
+			</if> 
+			<if test='outOrgCode != null'>  
+				out_org_code = #{outOrgCode},
+			</if> 
+			<if test='outOrgName != null'>  
+				out_org_name = #{outOrgName},
+			</if> 
+			<if test='outOrgScmCode != null'>  
+				out_org_scm_code = #{outOrgScmCode},
+			</if> 
+			<if test='outOrgErpCode != null'>  
+				out_org_erp_code = #{outOrgErpCode},
+			</if> 
+			<if test='provId != null'>  
+				prov_id = #{provId},
+			</if> 
+			<if test='provCode != null'>  
+				prov_code = #{provCode},
+			</if> 
+			<if test='provName != null'>  
+				prov_name = #{provName},
+			</if> 
+			<if test='provErpCode != null'>  
+				prov_erp_code = #{provErpCode},
+			</if> 
+			<if test='provOrgCode != null'>  
+				prov_org_code = #{provOrgCode},
+			</if> 
+			<if test='provSystemId != null'>  
+				prov_system_id = #{provSystemId},
+			</if> 
+			<if test='deliveryRelation != null'>  
+				delivery_relation = #{deliveryRelation},
+			</if> 
+			<if test='balanceOrgId != null'>  
+				balance_org_id = #{balanceOrgId},
+			</if> 
+			<if test='fillter != null'>  
+				fillter = #{fillter},
+			</if> 
+			<if test='remark != null'>  
+				remark = #{remark},
+			</if> 
+			<if test='sumRow != null'>  
+				sum_row = #{sumRow},
+			</if> 
+			<if test='status != null'>  
+				status = #{status},
+			</if>
+			<if test="_databaseId == 'mysql'">
+				last_update_datetime = sysdate(),
+			</if>
+			<if test="_databaseId == 'oracle'">
+				last_update_datetime = sysdate,
+			</if>
+			version=version+1,
+		</set>
+		<where>
+			and id = #{id}
+			and version= #{version}
+		</where>
+	</update>
+	
+	<insert id="insert" parameterType="gyqx.spdhdi.po.Returnconfirm" >
+		insert into returnconfirm 
+		( id , bill_id ,return_bill_id, fill_date , spd_code , return_company_id , return_company_code , return_company_name , return_company_erp_code , return_org_id , return_org_code , return_org_name , return_org_scm_code , return_org_erp_code , out_org_id , out_org_code , out_org_name , out_org_scm_code , out_org_erp_code , prov_id , prov_code , prov_name , prov_erp_code , prov_org_code , prov_system_id , delivery_relation , balance_org_id , fillter , remark , sum_row , status , version ,last_update_datetime)
+		values (#{id},#{billId},#{returnBillId},#{fillDate},#{spdCode},#{returnCompanyId},#{returnCompanyCode},#{returnCompanyName},#{returnCompanyErpCode},#{returnOrgId},#{returnOrgCode},#{returnOrgName},#{returnOrgScmCode},#{returnOrgErpCode},#{outOrgId},#{outOrgCode},#{outOrgName},#{outOrgScmCode},#{outOrgErpCode},#{provId},#{provCode},#{provName},#{provErpCode},#{provOrgCode},#{provSystemId},#{deliveryRelation},#{balanceOrgId},#{fillter},#{remark},#{sumRow},#{status},#{version},
+		<if test="_databaseId == 'mysql'">
+			sysdate()
+		</if>
+		<if test="_databaseId == 'oracle'">
+			sysdate
+		</if>
+		)
+	</insert>
+	<select id="getByBillId" resultMap="returnconfirmVoMap" parameterType="java.lang.String">
+		select p.*,u.ename as fillterName
+		from returnconfirm p left join sys_user_org u on u.user_id = p.fillter
+		<where>
+			p.bill_id = #{billid}
+		</where>
+	</select>
+</mapper>

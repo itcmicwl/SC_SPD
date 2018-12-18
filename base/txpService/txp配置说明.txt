@@ -1,0 +1,68 @@
+client 目录为客户端（医院端）
+  目录下：
+   apache-activemq-5.15.2  客户端MQ
+          主要配置在 activemq.xml
+           根据实际情况修改端口（如：配置 61636）
+	   在bin 目录下运行 activemq start 来run
+
+   txp 数据交换
+       运行 runClient.bat 就启动了。
+      数据库配置在： txpConfig/client/dbconfig.properties
+      mq配置在：txpConfig/client/txp-jms.xml
+      
+      在配置文件txpConfig\client\tasks.groovy 中,把配置项 fileDownloadPath 调整为实际的文件上传根目录 
+
+	1：文件上传下载的目录配置的修改：
+	    txpConfig\client\tasks.groovy 中修改 fileDownloadPath 的值为 WEB系统中文件上传的目录，（如：fileDownloadPath:'d:/upload',）
+	2：修改数据库的配置：txpConfig\client\dbconfig.properties
+	3：修改mq的配置：
+	    txpConfig\client\txp-jms.xml 中 第39 行的本地mq 的IP及端口，（bean id="localConnectionFactory"）
+	    txpConfig\client\txp-jms.xml 中 第54 行的武汉中心mq 的IP及端口，（bean id="toCenterConnectionFactory"）
+	    确定activemq 的 conf 目录中有证书文件：broker1.ks,broker1.ts
+	4：txp客户端配置中医院 站点ID修改：
+	    （当多个医院共一个数据库时，它们共一个站点ID ，站点ID以实际地名命名）
+	     txpConfig\client\tasks.groovy 中的siteId修改医院实际的站点ID 
+	                         如华山北院：siteId:'sh-huashanbei'
+	     txpConfig\txpClient.xml 中 *从中心下载通知* 结点修改 【topic:sites?clientId=？？？.topic 和 durableSubscriptionName=？？？】 为实际的ID。
+	                         如华山北院：topic:sites?clientId=sh-huashanbei.topic
+	     txpConfig\txpClient.xml 中 *从中心下载任务数据* 结点修改 【activemq2center:queue:site-？？？】 为实际的ID。
+				如华山北院：activemq2center:queue:site-sh-huashanbei
+
+
+center 为武汉数据中心
+   目录下：
+   apache-activemq-5.15.2  客户端MQ
+          主要配置在 activemq.xml
+           根据实际情况修改端口（如：配置 61626）
+          在bin 目录下运行 activemq start 来run
+
+   txp 数据交换
+       运行 runCenter.bat 就启动了。
+      数据库配置在： txpConfig/center/dbconfig.properties
+      mq配置在：txpConfig/center/txp-jms.xml
+      在配置文件txpConfig\center\tasks.groovy 中,把配置项 fileDownloadPath 调整为实际的文件上传根目录 
+
+	1：文件上传的目录配置的修改：
+    		txp\txpConfig\center\tasks.groovy 中修改 fileDownloadPath 的值为 WEB系统中文件上传的目录，（如：fileDownloadPath:'d:/upload',）
+	2：修改数据库的配置：
+		txpConfig\center\dbconfig.properties
+	3：修改mq的配置：
+		txpConfig\center\txp-jms.xml 中 第37 行的中心本地mq 的IP及端口，（bean id="centerConnectionFactory"）
+	4：站点ID与医院ID对应的修改：
+		txpConfig\center\tasks.groovy 中 结点 mapSiteHospitalIfs 的配置修改为实际的对应表：
+		当下的配置为：
+		mapSiteHospitalIfs:
+ 	['shanghai-huashanbei':[
+ 		[id:'h0001',name:'华山北医院']
+ 		],
+ 	 'sichuan':[
+ 	 	[id:'h001d',name:'彭州人民医院'],
+ 	 	[id:'h001e',name:'363医院']
+ 	 ] 
+ 	]
+
+
+	5：oracle dcn服务通知端口的配置：
+		如果txp与oracle不在一台机器中时，所在的机器上的防火墙 上把44466 端口打开 （oracle dcn 要反向调用这个端口）
+
+

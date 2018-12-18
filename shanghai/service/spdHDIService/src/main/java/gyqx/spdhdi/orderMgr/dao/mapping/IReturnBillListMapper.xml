@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="gyqx.spdhdi.orderMgr.dao.mapper.IReturnBillListMapper"> 
+<!-- parameterType传入参数类型     resultMap=自己定义的一个返回类型     resultType返回类型 -->
+	<select id="list"  resultMap="returnBillListMap" parameterType="gyqx.spdhdi.po.ReturnBillList">
+		<![CDATA[
+		select id,pid,row_number,return_bill_id,hos_goods_id,batch_num,batch_code,is_unique_code,hos_goods_code,hos_goods_name,goods_status,instore_price,outstore_price,can_return_qty,qty,pur_bill_id,apply_bill_id,return_reason,status,version from return_bill_list
+		]]>
+		<where>
+			1=1
+			<if test='returnBillId != null and returnBillId !=""'>
+				and return_bill_id =#{returnBillId}
+			</if>
+			<if test='pid != null and pid !=""'>
+				and pid =#{pid}
+			</if>
+			
+		</where>
+	</select>
+	<select id="listVo"  resultMap="returnBillListVoMap" parameterType="gyqx.spdhdi.orderMgr.vo.ReturnBillListVo">
+		select rbl.id,rbl.pid,rbl.row_number,rbl.return_bill_id,rbl.hos_goods_id,rbl.batch_num,rbl.batch_code,rbl.is_unique_code,
+			rbl.hos_goods_code,rbl.hos_goods_name,rbl.goods_status,rbl.instore_price,
+			rbl.outstore_price,rbl.can_return_qty,rbl.qty,rbl.pur_bill_id,rbl.apply_bill_id,
+			rbl.return_reason,rbl.status,rbl.version,
+			v.prov_goodsid as provGoodsId,
+			v.goods_gg as goodsGg,
+			v.mfrs_id as goodsMrfsId,
+			v.mfrs_name as mfrsName,
+			v.made as made,
+			v.prov_erp_code as provGoodsErpCode,
+			v.goods_name as  provGoodsErpName,
+			v.his_unit as returnUnit,	
+	        v.unit_rate as returnScale,
+	        v.unit as  sendUnit,
+	        v.sale_price as sendPrice
+		from return_bill_list rbl
+		LEFT JOIN v_pro_hos_goodsinfo v ON v.id = rbl.hos_goods_id 
+			<if test='provId != null and provId !=""'>
+				and v.prov_id =#{provId}
+			</if>
+			
+			<if test='returnCompanyId != null and returnCompanyId !=""'>
+				and v.hos_id =#{returnCompanyId}
+			</if>
+		<where>
+			1=1
+			<if test='returnBillId != null and returnBillId !=""'>
+				and rbl.return_bill_id =#{returnBillId}
+			</if>
+			<if test='pid != null and pid !=""'>
+				and rbl.pid =#{pid}
+			</if>
+		</where>
+	</select>
+	<resultMap type="gyqx.spdhdi.orderMgr.vo.ReturnBillListVo" id="returnBillListVoMap">
+		<id property="id" column="id"/>
+		<result property="pid"  column="pid"/>
+		<result property="rowNumber"  column="row_number"/>
+		<result property="returnBillId"  column="return_bill_id"/>
+		<result property="hosGoodsId"  column="hos_goods_id"/>
+		<result property="batchNum"  column="batch_num"/>
+		<result property="batchCode"  column="batch_code"/>
+		<result property="isUniqueCode"  column="is_unique_code"/>
+		<result property="hosGoodsCode"  column="hos_goods_code"/>
+		<result property="hosGoodsName"  column="hos_goods_name"/>
+		<result property="goodsStatus"  column="goods_status"/>
+		<result property="instorePrice"  column="instore_price"/>
+		<result property="outstorePrice"  column="outstore_price"/>
+		<result property="canReturnQty"  column="can_return_qty"/>
+		<result property="qty"  column="qty"/>
+		<result property="purBillId"  column="pur_bill_id"/>
+		<result property="applyBillId"  column="apply_bill_id"/>
+		<result property="returnReason"  column="return_reason"/>
+		<result property="version"  column="version"/>
+		<result property="status"  column="status"/>
+		<result property="provGoodsId"  column="provGoodsId"/>
+		<result property="goodsGg"  column="goodsGg"/>
+		<result property="goodsMrfsId"  column="goodsMrfsId"/>
+		<result property="mfrsName"  column="mfrsName"/>
+		<result property="made"  column="made"/>
+	    <result property="provGoodsErpCode"  column="provGoodsErpCode"/>
+		<result property="provGoodsErpName"  column="provGoodsErpName"/>
+		<result property="returnUnit"  column="returnUnit"/>
+		<result property="returnScale"  column="returnScale"/>
+		<result property="sendUnit"  column="sendUnit"/>
+		<result property="sendPrice"  column="sendPrice"/>
+		
+	</resultMap> 
+ 	<resultMap type="gyqx.spdhdi.po.ReturnBillList" id="returnBillListMap">
+		<id property="id" column="id"/>
+		<result property="pid"  column="pid"/>
+		<result property="rowNumber"  column="row_number"/>
+		<result property="returnBillId"  column="return_bill_id"/>
+		<result property="hosGoodsId"  column="hos_goods_id"/>
+		<result property="batchNum"  column="batch_num"/>
+		<result property="batchCode"  column="batch_code"/>
+		<result property="isUniqueCode"  column="is_unique_code"/>
+		<result property="hosGoodsCode"  column="hos_goods_code"/>
+		<result property="hosGoodsName"  column="hos_goods_name"/>
+		<result property="goodsStatus"  column="goods_status"/>
+		<result property="instorePrice"  column="instore_price"/>
+		<result property="outstorePrice"  column="outstore_price"/>
+		<result property="canReturnQty"  column="can_return_qty"/>
+		<result property="qty"  column="qty"/>
+		<result property="purBillId"  column="pur_bill_id"/>
+		<result property="applyBillId"  column="apply_bill_id"/>
+		<result property="returnReason"  column="return_reason"/>
+		<result property="version"  column="version"/>
+		<result property="status"  column="status"/>
+	</resultMap> 
+	<delete id="deleteReturnBillListByBillId" parameterType="java.lang.String">
+		DELETE
+		FROM return_bill_list
+		WHERE return_bill_id=#{billId}
+	</delete>
+	<update id="update" parameterType="gyqx.spdhdi.po.ReturnBillList" >
+		update return_bill_list
+		<set>
+			<if test='pid != null'>  
+				pid = #{pid},
+			</if> 
+			<if test='rowNumber != null'>  
+				row_number = #{rowNumber},
+			</if> 
+			<if test='returnBillId != null'>  
+				return_bill_id = #{returnBillId},
+			</if> 
+			<if test='hosGoodsId != null'>  
+				hos_goods_id = #{hosGoodsId},
+			</if> 
+			<if test='batchNum != null'>  
+				batch_num = #{batchNum},
+			</if> 
+			<if test='batchCode != null'>  
+				batch_code = #{batchCode},
+			</if> 
+			<if test='isUniqueCode != null'>  
+				is_unique_code = #{isUniqueCode},
+			</if> 
+			<if test='hosGoodsCode != null'>  
+				hos_goods_code = #{hosGoodsCode},
+			</if> 
+			<if test='hosGoodsName != null'>  
+				hos_goods_name = #{hosGoodsName},
+			</if> 
+			<if test='goodsStatus != null'>  
+				goods_status = #{goodsStatus},
+			</if> 
+			<if test='instorePrice != null'>  
+				instore_price = #{instorePrice},
+			</if> 
+			<if test='outstorePrice != null'>  
+				outstore_price = #{outstorePrice},
+			</if> 
+			<if test='canReturnQty != null'>  
+				can_return_qty = #{canReturnQty},
+			</if> 
+			<if test='qty != null'>  
+				qty = #{qty},
+			</if> 
+			<if test='purBillId != null'>  
+				pur_bill_id = #{purBillId},
+			</if> 
+			<if test='applyBillId != null'>  
+				apply_bill_id = #{applyBillId},
+			</if> 
+			<if test='status != null'>  
+				 status = #{status},
+			</if> 
+			<if test='returnReason != null'>  
+				return_reason = #{returnReason},
+			</if>
+			<if test="_databaseId == 'mysql'">
+				last_update_datetime = sysdate(),
+			</if>
+			<if test="_databaseId == 'oracle'">
+				last_update_datetime = sysdate,
+			</if>
+			version=version+1,
+		</set>
+		<where>
+			and id = #{id}
+			and version= #{version}
+		</where>
+	</update>
+</mapper>
